@@ -1,6 +1,5 @@
 "use server";
 
-import { Role, TicketPriority, TicketStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/app/lib/prisma";
@@ -13,27 +12,19 @@ function getString(formData: FormData, key: string) {
 }
 
 function parsePriority(value: string) {
-  if (
-    value === TicketPriority.LOW ||
-    value === TicketPriority.HIGH ||
-    value === TicketPriority.URGENT
-  ) {
+  if (value === "LOW" || value === "HIGH" || value === "URGENT") {
     return value;
   }
 
-  return TicketPriority.MEDIUM;
+  return "MEDIUM";
 }
 
 function parseStatus(value: string) {
-  if (
-    value === TicketStatus.IN_PROGRESS ||
-    value === TicketStatus.RESOLVED ||
-    value === TicketStatus.CLOSED
-  ) {
+  if (value === "IN_PROGRESS" || value === "RESOLVED" || value === "CLOSED") {
     return value;
   }
 
-  return TicketStatus.OPEN;
+  return "OPEN";
 }
 
 export async function createTicketAction(formData: FormData) {
@@ -59,7 +50,7 @@ export async function createTicketAction(formData: FormData) {
   });
 
   const admins = await prisma.user.findMany({
-    where: { role: Role.ADMINISTRATOR },
+    where: { role: "ADMINISTRATOR" },
     select: { id: true },
   });
 
@@ -79,7 +70,7 @@ export async function createTicketAction(formData: FormData) {
 }
 
 export async function updateTicketStatusAction(formData: FormData) {
-  await requireRole([Role.ADMINISTRATOR, Role.MAINTENANCE_STAFF]);
+  await requireRole(["ADMINISTRATOR", "MAINTENANCE_STAFF"]);
 
   const ticketId = getString(formData, "ticketId");
   const status = parseStatus(getString(formData, "status"));

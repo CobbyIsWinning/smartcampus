@@ -1,6 +1,5 @@
 "use server";
 
-import { Role } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { prisma } from "@/app/lib/prisma";
 import { hashPassword, verifyPassword } from "@/app/lib/password";
@@ -39,7 +38,7 @@ export async function registerAction(formData: FormData) {
       name,
       email,
       passwordHash: hashPassword(password),
-      role: Role.STUDENT,
+      role: "STUDENT",
     },
   });
 

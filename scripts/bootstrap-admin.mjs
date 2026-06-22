@@ -2,7 +2,7 @@ import "dotenv/config";
 import { scryptSync, randomBytes } from "node:crypto";
 import { neonConfig } from "@neondatabase/serverless";
 import { PrismaNeon } from "@prisma/adapter-neon";
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import ws from "ws";
 
 neonConfig.webSocketConstructor = ws;
@@ -43,7 +43,7 @@ try {
       data: {
         name,
         passwordHash,
-        role: Role.ADMINISTRATOR,
+        role: "ADMINISTRATOR",
       },
     });
     console.log(`Updated ${email} as ADMINISTRATOR.`);
@@ -53,7 +53,7 @@ try {
         name,
         email,
         passwordHash,
-        role: Role.ADMINISTRATOR,
+        role: "ADMINISTRATOR",
       },
     });
     console.log(`Created ${email} as ADMINISTRATOR.`);

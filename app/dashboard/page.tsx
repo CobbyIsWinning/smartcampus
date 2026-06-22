@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Role, TicketStatus } from "@prisma/client";
 import { updateProfileAction } from "@/app/actions/auth.actions";
 import { markNotificationsReadAction } from "@/app/actions/maintenance.actions";
 import { Notice } from "@/app/components/notice";
@@ -20,7 +19,7 @@ export default async function DashboardPage({
   const params = await searchParams;
   const user = await requireUser();
   const isAdmin =
-    user.role === Role.ADMINISTRATOR || user.role === Role.MAINTENANCE_STAFF;
+    user.role === "ADMINISTRATOR" || user.role === "MAINTENANCE_STAFF";
 
   const [tickets, notifications, totalTickets, openTickets, resolvedTickets, totalUsers] =
     await Promise.all([
@@ -36,8 +35,8 @@ export default async function DashboardPage({
         take: 6,
       }),
       prisma.maintenanceTicket.count(),
-      prisma.maintenanceTicket.count({ where: { status: TicketStatus.OPEN } }),
-      prisma.maintenanceTicket.count({ where: { status: TicketStatus.RESOLVED } }),
+      prisma.maintenanceTicket.count({ where: { status: "OPEN" } }),
+      prisma.maintenanceTicket.count({ where: { status: "RESOLVED" } }),
       prisma.user.count(),
     ]);
 

@@ -1,11 +1,12 @@
 import { randomBytes } from "crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Role, type User } from "@prisma/client";
+import type { User } from "@prisma/client";
 import { prisma } from "@/app/lib/prisma";
 
 const SESSION_COOKIE = "smartcampus_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+type AppRole = "STUDENT" | "ADMINISTRATOR" | "MAINTENANCE_STAFF";
 
 export type CurrentUser = Pick<
   User,
@@ -89,7 +90,7 @@ export async function requireUser() {
   return user;
 }
 
-export async function requireRole(roles: Role[]) {
+export async function requireRole(roles: AppRole[]) {
   const user = await requireUser();
 
   if (!roles.includes(user.role)) {

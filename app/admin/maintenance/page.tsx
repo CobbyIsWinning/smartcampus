@@ -1,5 +1,4 @@
 import { Notice } from "@/app/components/notice";
-import { Role } from "@prisma/client";
 import { updateTicketStatusAction } from "@/app/actions/maintenance.actions";
 import { SubmitButton } from "@/app/components/submit-button";
 import { AppShell, Field, StatusPill } from "@/app/components/ui";
@@ -27,14 +26,14 @@ export default async function AdminMaintenancePage({
   searchParams: Promise<{ updated?: string }>;
 }) {
   const params = await searchParams;
-  const user = await requireRole([Role.ADMINISTRATOR, Role.MAINTENANCE_STAFF]);
+  const user = await requireRole(["ADMINISTRATOR", "MAINTENANCE_STAFF"]);
   const [tickets, staff] = await Promise.all([
     prisma.maintenanceTicket.findMany({
       include: { requester: true, assignedTo: true },
       orderBy: { updatedAt: "desc" },
     }),
     prisma.user.findMany({
-      where: { role: { in: [Role.ADMINISTRATOR, Role.MAINTENANCE_STAFF] } },
+      where: { role: { in: ["ADMINISTRATOR", "MAINTENANCE_STAFF"] } },
       orderBy: { name: "asc" },
     }),
   ]);
