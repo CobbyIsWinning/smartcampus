@@ -1,6 +1,5 @@
 "use server";
 
-import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/app/lib/prisma";
@@ -56,7 +55,11 @@ export async function createTicketAction(formData: FormData) {
   });
 
   if (admins.length > 0) {
-    const notificationData: Prisma.NotificationCreateManyInput[] = admins.map(
+    const notificationData: Array<{
+      userId: string;
+      title: string;
+      message: string;
+    }> = admins.map(
       (admin: { id: string }) => ({
         userId: admin.id,
         title: "New maintenance ticket",
