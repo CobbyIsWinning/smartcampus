@@ -43,8 +43,10 @@ export function AppShell({
   user?: CurrentUser | null;
   children: React.ReactNode;
 }) {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,hsl(var(--muted))_0,transparent_36%),linear-gradient(to_bottom,hsl(var(--background)),hsl(var(--background)))] text-foreground">
+    <div className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top_left,hsl(var(--muted))_0,transparent_36%),linear-gradient(to_bottom,hsl(var(--background)),hsl(var(--background)))] text-foreground">
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
           <Link href="/" className="font-heading text-lg font-semibold uppercase tracking-wider">
@@ -139,7 +141,25 @@ export function AppShell({
           </nav>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl px-5 py-8">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-8">{children}</main>
+      <footer className="mt-12 border-t bg-muted/30">
+        <div className="mx-auto grid max-w-6xl gap-6 px-5 py-10 md:grid-cols-[1.3fr_0.7fr] md:items-end">
+          <div className="space-y-2">
+            <p className="font-heading text-xl font-semibold uppercase tracking-wider text-foreground">
+              Smart Campus
+            </p>
+            <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+              A campus operations platform for student support, maintenance ticket
+              tracking, admin oversight, and role-based notifications across the
+              institution.
+            </p>
+          </div>
+          <div className="text-sm text-muted-foreground md:text-right">
+            <p>Built for day-to-day campus service management.</p>
+            <p className="mt-2">{currentYear} Smart Campus</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
