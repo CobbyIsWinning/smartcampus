@@ -1,5 +1,6 @@
 "use server";
 
+import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/app/lib/prisma";
@@ -49,18 +50,22 @@ export async function createTicketAction(formData: FormData) {
     },
   });
 
-  const admins = await prisma.user.findMany({
+  const admins: Array<{ id: string }> = await prisma.user.findMany({
     where: { role: "ADMINISTRATOR" },
     select: { id: true },
   });
 
   if (admins.length > 0) {
-    await prisma.notification.createMany({
-      data: admins.map((admin) => ({
+    const notificationData: Prisma.NotificationCreateManyInput[] = admins.map(
+      (admin: { id: string }) => ({
         userId: admin.id,
         title: "New maintenance ticket",
         message: `${user.name} submitted "${ticket.title}" for ${ticket.location}.`,
-      })),
+      }),
+    );
+
+    await prisma.notification.createMany({
+      data: notificationData,
     });
   }
 
