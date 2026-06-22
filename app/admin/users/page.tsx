@@ -90,14 +90,24 @@ export default async function AdminUsersPage({
         ]}
       />
 
-      <section className="mt-8 grid gap-4 md:grid-cols-4">
+      <section className="-mx-5 mt-8 grid gap-4 border-y bg-muted/35 px-5 py-5 md:grid-cols-4">
         <StatCard label="Total users" value={users.length} />
         <StatCard label="Admins" value={adminCount} />
         <StatCard label="Students" value={studentCount} />
         <StatCard label="Maintenance staff" value={staffCount} />
       </section>
 
-      <section className="mt-8">
+      <section className="-mx-5 mt-8 border-y bg-background px-5 py-6">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="font-heading text-2xl font-semibold uppercase tracking-wider">
+              User directory
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Registered accounts and current access level.
+            </p>
+          </div>
+        </div>
         {users.length === 0 ? (
           <p className="text-muted-foreground">No users have registered yet.</p>
         ) : (

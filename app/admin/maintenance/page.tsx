@@ -85,14 +85,24 @@ export default async function AdminMaintenancePage({
         }
       />
 
-      <section className="mt-8 grid gap-4 md:grid-cols-4">
+      <section className="-mx-5 mt-8 grid gap-4 border-y bg-muted/35 px-5 py-5 md:grid-cols-4">
         <StatCard label="Total tickets" value={tickets.length} />
         <StatCard label="Open" value={openTickets} />
         <StatCard label="In progress" value={inProgressTickets} />
         <StatCard label="Resolved" value={resolvedTickets} />
       </section>
 
-      <section className="mt-8">
+      <section className="-mx-5 mt-8 border-y bg-background px-5 py-6">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="font-heading text-2xl font-semibold uppercase tracking-wider">
+              Ticket queue
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Current requests, assignments, and status controls.
+            </p>
+          </div>
+        </div>
         {tickets.length === 0 ? (
           <p className="text-muted-foreground">
             No maintenance tickets have been submitted.
