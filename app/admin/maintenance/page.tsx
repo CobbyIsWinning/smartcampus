@@ -27,7 +27,20 @@ export default async function AdminMaintenancePage({
 }) {
   const params = await searchParams;
   const user = await requireRole(["ADMINISTRATOR", "MAINTENANCE_STAFF"]);
-  const [tickets, staff] = await Promise.all([
+  const [tickets, staff]: [
+    Array<{
+      id: string;
+      title: string;
+      description: string;
+      location: string;
+      priority: string;
+      status: string;
+      assignedToId: string | null;
+      requester: { name: string; email: string };
+      assignedTo: { name: string } | null;
+    }>,
+    Array<{ id: string; name: string }>,
+  ] = await Promise.all([
     prisma.maintenanceTicket.findMany({
       include: { requester: true, assignedTo: true },
       orderBy: { updatedAt: "desc" },
@@ -73,7 +86,7 @@ export default async function AdminMaintenancePage({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tickets.map((ticket) => (
+              {tickets.map((ticket: (typeof tickets)[number]) => (
                 <TableRow key={ticket.id}>
                   <TableCell className="align-top">
                     <div className="space-y-2 whitespace-normal">
