@@ -21,8 +21,26 @@ export default async function DashboardPage({
   const isAdmin =
     user.role === "ADMINISTRATOR" || user.role === "MAINTENANCE_STAFF";
 
-  const [tickets, notifications, totalTickets, openTickets, resolvedTickets, totalUsers] =
-    await Promise.all([
+  const [tickets, notifications, totalTickets, openTickets, resolvedTickets, totalUsers]: [
+    Array<{
+      id: string;
+      title: string;
+      location: string;
+      status: string;
+      requester: { name: string };
+      assignedTo: { name: string } | null;
+    }>,
+    Array<{
+      id: string;
+      title: string;
+      message: string;
+      read: boolean;
+    }>,
+    number,
+    number,
+    number,
+    number,
+  ] = await Promise.all([
       prisma.maintenanceTicket.findMany({
         where: isAdmin ? {} : { requesterId: user.id },
         include: { requester: true, assignedTo: true },
@@ -81,7 +99,9 @@ export default async function DashboardPage({
               value={
                 isAdmin
                   ? openTickets
-                  : tickets.filter((ticket) => ticket.status === "OPEN").length
+                  : tickets.filter(
+                      (ticket: (typeof tickets)[number]) => ticket.status === "OPEN",
+                    ).length
               }
             />
             <StatCard
@@ -89,7 +109,10 @@ export default async function DashboardPage({
               value={
                 isAdmin
                   ? resolvedTickets
-                  : tickets.filter((ticket) => ticket.status === "RESOLVED").length
+                  : tickets.filter(
+                      (ticket: (typeof tickets)[number]) =>
+                        ticket.status === "RESOLVED",
+                    ).length
               }
             />
             <StatCard
