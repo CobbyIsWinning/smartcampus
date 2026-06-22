@@ -1,3 +1,4 @@
+import { Notice } from "@/app/components/notice";
 import { Role } from "@prisma/client";
 import { updateTicketStatusAction } from "@/app/actions/maintenance.actions";
 import { SubmitButton } from "@/app/components/submit-button";
@@ -20,7 +21,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export default async function AdminMaintenancePage() {
+export default async function AdminMaintenancePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ updated?: string }>;
+}) {
+  const params = await searchParams;
   const user = await requireRole([Role.ADMINISTRATOR, Role.MAINTENANCE_STAFF]);
   const [tickets, staff] = await Promise.all([
     prisma.maintenanceTicket.findMany({
@@ -46,6 +52,10 @@ export default async function AdminMaintenancePage() {
         </div>
         <p className="text-sm text-muted-foreground">{tickets.length} tickets found</p>
       </div>
+
+      {params.updated === "1" ? (
+        <Notice variant="success">Ticket status and assignment updated.</Notice>
+      ) : null}
 
       <section className="mt-8">
         {tickets.length === 0 ? (

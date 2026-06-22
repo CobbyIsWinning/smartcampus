@@ -5,18 +5,11 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/app/lib/prisma";
 import { hashPassword, verifyPassword } from "@/app/lib/password";
 import { clearSession, createSession, requireUser } from "@/app/lib/session";
+import { validateLoginInput, validateRegisterInput } from "@/app/lib/validation";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
-}
-
-function parseRole(value: string) {
-  if (value === Role.ADMINISTRATOR || value === Role.MAINTENANCE_STAFF) {
-    return value;
-  }
-
-  return Role.STUDENT;
 }
 
 export async function registerAction(formData: FormData) {
@@ -24,14 +17,15 @@ export async function registerAction(formData: FormData) {
   const email = getString(formData, "email").toLowerCase();
   const password = getString(formData, "password");
   const confirmPassword = getString(formData, "confirmPassword");
-  const role = parseRole(getString(formData, "role"));
+  const validation = validateRegisterInput({
+    name,
+    email,
+    password,
+    confirmPassword,
+  });
 
-  if (!name || !email || password.length < 8) {
-    redirect("/register?error=missing-fields");
-  }
-
-  if (password !== confirmPassword) {
-    redirect("/register?error=password-mismatch");
+  if (!validation.ok) {
+    redirect(`/register?error=${validation.error}`);
   }
 
   const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -45,17 +39,23 @@ export async function registerAction(formData: FormData) {
       name,
       email,
       passwordHash: hashPassword(password),
-      role,
+      role: Role.STUDENT,
     },
   });
 
   await createSession(user.id);
-  redirect("/dashboard");
+  redirect("/dashboard?welcome=1");
 }
 
 export async function loginAction(formData: FormData) {
   const email = getString(formData, "email").toLowerCase();
   const password = getString(formData, "password");
+  const validation = validateLoginInput({ email, password });
+
+  if (!validation.ok) {
+    redirect(`/login?error=${validation.error}`);
+  }
+
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user || !verifyPassword(password, user.passwordHash)) {
@@ -68,7 +68,7 @@ export async function loginAction(formData: FormData) {
 
 export async function logoutAction() {
   await clearSession();
-  redirect("/login");
+  redirect("/login?message=signed-out");
 }
 
 export async function updateProfileAction(formData: FormData) {

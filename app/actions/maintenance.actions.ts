@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/app/lib/prisma";
 import { requireRole, requireUser } from "@/app/lib/session";
+import { validateTicketInput } from "@/app/lib/validation";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
@@ -41,9 +42,10 @@ export async function createTicketAction(formData: FormData) {
   const description = getString(formData, "description");
   const location = getString(formData, "location");
   const priority = parsePriority(getString(formData, "priority"));
+  const validation = validateTicketInput({ title, description, location });
 
-  if (!title || !description || !location) {
-    redirect("/maintenance/new?error=missing-fields");
+  if (!validation.ok) {
+    redirect(`/maintenance/new?error=${validation.error}`);
   }
 
   const ticket = await prisma.maintenanceTicket.create({
