@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { loginAction } from "@/app/actions/auth.actions";
-import { Notice } from "@/app/components/notice";
+import { ActionToast } from "@/app/components/action-toast";
 import { PasswordField } from "@/app/components/password-field";
 import { SubmitButton } from "@/app/components/submit-button";
 import { AppShell, Field } from "@/app/components/ui";
@@ -20,7 +20,7 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ error?: string; message?: string }>;
 }) {
-  const { error, message } = await searchParams;
+  const { error } = await searchParams;
   const errorMessages: Record<string, string> = {
     "invalid-email": "Enter a valid email address.",
     "missing-fields": "Enter both email and password.",
@@ -49,14 +49,27 @@ export default async function LoginPage({
             <CardDescription>Access your role-based campus dashboard.</CardDescription>
           </CardHeader>
           <CardContent>
-            {message === "signed-out" ? (
-              <Notice variant="success">You have been signed out.</Notice>
-            ) : null}
-            {error ? (
-              <Notice variant="error">
-                {errorMessages[error] ?? "Email or password is incorrect."}
-              </Notice>
-            ) : null}
+            <ActionToast
+              specs={[
+                {
+                  key: "message",
+                  value: "signed-out",
+                  message: "You have been signed out.",
+                  type: "success",
+                },
+                ...(error
+                  ? [
+                      {
+                        key: "error",
+                        value: error,
+                        message:
+                          errorMessages[error] ?? "Email or password is incorrect.",
+                        type: "error" as const,
+                      },
+                    ]
+                  : []),
+              ]}
+            />
             <form action={loginAction} className="grid gap-4">
               <Field label="Email">
                 <Input name="email" required type="email" />

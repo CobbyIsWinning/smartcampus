@@ -1,4 +1,4 @@
-import { Notice } from "@/app/components/notice";
+import { ActionToast } from "@/app/components/action-toast";
 import { updateTicketStatusAction } from "@/app/actions/maintenance.actions";
 import { SubmitButton } from "@/app/components/submit-button";
 import { AppShell, Field, StatusPill } from "@/app/components/ui";
@@ -65,9 +65,20 @@ export default async function AdminMaintenancePage({
         <p className="text-sm text-muted-foreground">{tickets.length} tickets found</p>
       </div>
 
-      {params.updated === "1" ? (
-        <Notice variant="success">Ticket status and assignment updated.</Notice>
-      ) : null}
+      <ActionToast
+        specs={
+          params.updated === "1"
+            ? [
+                {
+                  key: "updated",
+                  value: "1",
+                  message: "Ticket status and assignment updated.",
+                  type: "success",
+                },
+              ]
+            : []
+        }
+      />
 
       <section className="mt-8">
         {tickets.length === 0 ? (

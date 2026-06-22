@@ -1,5 +1,5 @@
 import { createTicketAction } from "@/app/actions/maintenance.actions";
-import { Notice } from "@/app/components/notice";
+import { ActionToast } from "@/app/components/action-toast";
 import { SubmitButton } from "@/app/components/submit-button";
 import { AppShell, Field } from "@/app/components/ui";
 import { requireUser } from "@/app/lib/session";
@@ -45,11 +45,20 @@ export default async function NewMaintenanceTicketPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {error ? (
-              <Notice variant="error">
-                {errorMessages[error] ?? "Ticket submission failed."}
-              </Notice>
-            ) : null}
+            <ActionToast
+              specs={
+                error
+                  ? [
+                      {
+                        key: "error",
+                        value: error,
+                        message: errorMessages[error] ?? "Ticket submission failed.",
+                        type: "error",
+                      },
+                    ]
+                  : []
+              }
+            />
             <form action={createTicketAction} className="grid gap-4">
               <Field label="Issue title">
                 <Input name="title" required />

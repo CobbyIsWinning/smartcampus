@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { updateProfileAction } from "@/app/actions/auth.actions";
 import { markNotificationsReadAction } from "@/app/actions/maintenance.actions";
-import { Notice } from "@/app/components/notice";
+import { ActionToast } from "@/app/components/action-toast";
 import { SubmitButton } from "@/app/components/submit-button";
 import { AppShell, Field, StatCard, StatusPill } from "@/app/components/ui";
 import { prisma } from "@/app/lib/prisma";
@@ -73,16 +73,40 @@ export default async function DashboardPage({
           <Link href="/maintenance/new">Create maintenance ticket</Link>
         </Button>
       </div>
-
-      {params.welcome === "1" ? (
-        <Notice variant="success">Account created. You are signed in as a student.</Notice>
-      ) : null}
-      {params.ticket === "created" ? (
-        <Notice variant="success">Maintenance ticket submitted successfully.</Notice>
-      ) : null}
-      {params.profile === "updated" ? (
-        <Notice variant="success">Profile updated successfully.</Notice>
-      ) : null}
+      <ActionToast
+        specs={[
+          ...(params.welcome === "1"
+            ? [
+                {
+                  key: "welcome",
+                  value: "1",
+                  message: "Account created. You are signed in as a student.",
+                  type: "success" as const,
+                },
+              ]
+            : []),
+          ...(params.ticket === "created"
+            ? [
+                {
+                  key: "ticket",
+                  value: "created",
+                  message: "Maintenance ticket submitted successfully.",
+                  type: "success" as const,
+                },
+              ]
+            : []),
+          ...(params.profile === "updated"
+            ? [
+                {
+                  key: "profile",
+                  value: "updated",
+                  message: "Profile updated successfully.",
+                  type: "success" as const,
+                },
+              ]
+            : []),
+        ]}
+      />
 
       <Tabs className="mt-8 gap-8" defaultValue="overview">
         <TabsList className="w-full justify-start border-b p-0" variant="line">
