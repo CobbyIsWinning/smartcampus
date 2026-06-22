@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { loginAction } from "@/app/actions/auth.actions";
 import { Notice } from "@/app/components/notice";
@@ -28,8 +29,21 @@ export default async function LoginPage({
 
   return (
     <AppShell>
-      <div className="mx-auto max-w-xl">
-        <Card>
+      <section className="mx-auto flex min-h-[calc(100vh-13rem)] w-full max-w-xl flex-col items-center justify-start pt-8 md:pt-14">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <Image
+            alt="Smart Campus"
+            className="h-24 w-24 object-cover md:h-28 md:w-28"
+            height={112}
+            priority
+            src="/favicon.png"
+            width={112}
+          />
+          <p className="mt-4 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            Smart Campus
+          </p>
+        </div>
+        <Card className="w-full">
           <CardHeader>
             <CardTitle>Sign in</CardTitle>
             <CardDescription>Access your role-based campus dashboard.</CardDescription>
@@ -62,7 +76,7 @@ export default async function LoginPage({
             </p>
           </CardContent>
         </Card>
-      </div>
+      </section>
     </AppShell>
   );
 }
