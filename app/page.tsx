@@ -25,9 +25,6 @@ export default async function Home() {
             <Button asChild>
               <Link href={user ? "/dashboard" : "/register"}>Open dashboard</Link>
             </Button>
-            <Button asChild variant="outline">
-              <Link href="/test-db">Test database</Link>
-            </Button>
           </div>
         </div>
         <div className="bg-muted/35 px-0 py-2">

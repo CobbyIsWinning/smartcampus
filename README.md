@@ -16,6 +16,25 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+## Admin users
+
+New registrations are always created as students. To make a user an admin, set
+the admin credentials in your environment and run:
+
+```bash
+npm run bootstrap:admin
+```
+
+By default this promotes `cobbyboateng16@gmail.com` to `ADMINISTRATOR`. If the
+account already exists, the password is left unchanged unless `ADMIN_PASSWORD`
+is provided. If the account does not exist yet, provide a password:
+
+```bash
+ADMIN_PASSWORD="password123" npm run bootstrap:admin
+```
+
+Administrators can manage user roles in the app at `/admin/users`.
+
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.

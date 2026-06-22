@@ -1,7 +1,7 @@
 import { ActionToast } from "@/app/components/action-toast";
 import { updateTicketStatusAction } from "@/app/actions/maintenance.actions";
 import { SubmitButton } from "@/app/components/submit-button";
-import { AppShell, Field, StatusPill } from "@/app/components/ui";
+import { AppShell, Field, StatCard, StatusPill } from "@/app/components/ui";
 import { prisma } from "@/app/lib/prisma";
 import { requireRole } from "@/app/lib/session";
 import {
@@ -50,6 +50,11 @@ export default async function AdminMaintenancePage({
       orderBy: { name: "asc" },
     }),
   ]);
+  const openTickets = tickets.filter((ticket) => ticket.status === "OPEN").length;
+  const inProgressTickets = tickets.filter(
+    (ticket) => ticket.status === "IN_PROGRESS",
+  ).length;
+  const resolvedTickets = tickets.filter((ticket) => ticket.status === "RESOLVED").length;
 
   return (
     <AppShell user={user}>
@@ -79,6 +84,13 @@ export default async function AdminMaintenancePage({
             : []
         }
       />
+
+      <section className="mt-8 grid gap-4 md:grid-cols-4">
+        <StatCard label="Total tickets" value={tickets.length} />
+        <StatCard label="Open" value={openTickets} />
+        <StatCard label="In progress" value={inProgressTickets} />
+        <StatCard label="Resolved" value={resolvedTickets} />
+      </section>
 
       <section className="mt-8">
         {tickets.length === 0 ? (

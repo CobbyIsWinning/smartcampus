@@ -8,6 +8,7 @@ const revalidatePathMock = vi.fn();
 
 const prismaMock = {
   maintenanceTicket: {
+    count: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
   },
@@ -52,6 +53,7 @@ describe("maintenance.actions", () => {
       location: "Dorm A",
     });
     prismaMock.user.findMany.mockResolvedValue([{ id: "admin-1" }, { id: "admin-2" }]);
+    prismaMock.maintenanceTicket.count.mockResolvedValue(3);
 
     const { createTicketAction } = await import("@/app/actions/maintenance.actions");
     const formData = new FormData();
@@ -66,7 +68,10 @@ describe("maintenance.actions", () => {
       expect.objectContaining({
         data: expect.arrayContaining([
           expect.objectContaining({ userId: "admin-1" }),
-          expect.objectContaining({ userId: "admin-2" }),
+          expect.objectContaining({
+            userId: "admin-2",
+            message: expect.stringContaining("3 open tickets"),
+          }),
         ]),
       }),
     );

@@ -55,6 +55,9 @@ export async function createTicketAction(formData: FormData) {
   });
 
   if (admins.length > 0) {
+    const openTicketCount = await prisma.maintenanceTicket.count({
+      where: { status: "OPEN" },
+    });
     const notificationData: Array<{
       userId: string;
       title: string;
@@ -63,7 +66,7 @@ export async function createTicketAction(formData: FormData) {
       (admin: { id: string }) => ({
         userId: admin.id,
         title: "New maintenance ticket",
-        message: `${user.name} submitted "${ticket.title}" for ${ticket.location}.`,
+        message: `${user.name} submitted "${ticket.title}" for ${ticket.location}. ${openTicketCount} open ticket${openTicketCount === 1 ? "" : "s"} need review.`,
       }),
     );
 

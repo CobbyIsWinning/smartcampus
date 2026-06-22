@@ -1,14 +1,23 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/app/lib/prisma";
 import { hashPassword, verifyPassword } from "@/app/lib/password";
-import { clearSession, createSession, requireUser } from "@/app/lib/session";
+import { clearSession, createSession, requireRole, requireUser } from "@/app/lib/session";
 import { validateLoginInput, validateRegisterInput } from "@/app/lib/validation";
 
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
+}
+
+function parseRole(value: string) {
+  if (value === "ADMINISTRATOR" || value === "MAINTENANCE_STAFF") {
+    return value;
+  }
+
+  return "STUDENT";
 }
 
 export async function registerAction(formData: FormData) {
@@ -84,4 +93,27 @@ export async function updateProfileAction(formData: FormData) {
   });
 
   redirect("/dashboard?profile=updated");
+}
+
+export async function updateUserRoleAction(formData: FormData) {
+  const admin = await requireRole(["ADMINISTRATOR"]);
+  const userId = getString(formData, "userId");
+  const role = parseRole(getString(formData, "role"));
+
+  if (!userId) {
+    redirect("/admin/users?error=missing-user");
+  }
+
+  if (userId === admin.id && role !== "ADMINISTRATOR") {
+    redirect("/admin/users?error=self-admin");
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { role },
+  });
+
+  revalidatePath("/admin/users");
+  revalidatePath("/dashboard");
+  redirect("/admin/users?updated=1");
 }

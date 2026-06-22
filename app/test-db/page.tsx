@@ -1,5 +1,6 @@
 import { AppShell } from "@/app/components/ui";
 import { prisma } from "@/app/lib/prisma";
+import { requireRole } from "@/app/lib/session";
 import {
   Card,
   CardContent,
@@ -22,9 +23,11 @@ async function countUsers() {
 }
 
 export default async function TestDbPage() {
+  const user = await requireRole(["ADMINISTRATOR"]);
+
   if (!process.env.DATABASE_URL) {
     return (
-      <AppShell>
+      <AppShell user={user}>
         <Card>
           <CardHeader>
             <CardTitle>Database test</CardTitle>
@@ -44,7 +47,7 @@ export default async function TestDbPage() {
 
   if ("usersFound" in result) {
     return (
-      <AppShell>
+      <AppShell user={user}>
         <Card>
           <CardHeader>
             <CardTitle>Database test</CardTitle>
@@ -59,7 +62,7 @@ export default async function TestDbPage() {
   }
 
   return (
-    <AppShell>
+    <AppShell user={user}>
       <Card>
         <CardHeader>
           <CardTitle>Database test</CardTitle>

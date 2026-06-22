@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ChevronDown, LayoutDashboard, LogOut, Plus, Settings } from "lucide-react";
+import {
+  ChevronDown,
+  LayoutDashboard,
+  LogOut,
+  Plus,
+  Settings,
+  Users,
+} from "lucide-react";
 import { logoutAction } from "@/app/actions/auth.actions";
 import { SubmitButton } from "@/app/components/submit-button";
 import { Badge } from "@/components/ui/badge";
@@ -59,12 +66,22 @@ export function AppShell({
                   </Link>
                 </Button>
                 {user.role !== "STUDENT" ? (
-                  <Button asChild size="sm" variant="ghost">
-                    <Link href="/admin/maintenance">
-                      <Settings />
-                      Manage Tickets
-                    </Link>
-                  </Button>
+                  <>
+                    <Button asChild size="sm" variant="ghost">
+                      <Link href="/admin/maintenance">
+                        <Settings />
+                        Manage Tickets
+                      </Link>
+                    </Button>
+                    {user.role === "ADMINISTRATOR" ? (
+                      <Button asChild size="sm" variant="ghost">
+                        <Link href="/admin/users">
+                          <Users />
+                          Users
+                        </Link>
+                      </Button>
+                    ) : null}
+                  </>
                 ) : null}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -90,6 +107,11 @@ export function AppShell({
                     <DropdownMenuItem asChild>
                       <Link href="/maintenance/new">New ticket</Link>
                     </DropdownMenuItem>
+                    {user.role === "ADMINISTRATOR" ? (
+                      <DropdownMenuItem asChild>
+                        <Link href="/admin/users">Users</Link>
+                      </DropdownMenuItem>
+                    ) : null}
                     <DropdownMenuSeparator />
                     <form action={logoutAction} className="px-1.5 py-1">
                       <SubmitButton

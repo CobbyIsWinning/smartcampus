@@ -21,7 +21,15 @@ export default async function DashboardPage({
   const isAdmin =
     user.role === "ADMINISTRATOR" || user.role === "MAINTENANCE_STAFF";
 
-  const [tickets, notifications, totalTickets, openTickets, resolvedTickets, totalUsers]: [
+  const [
+    tickets,
+    notifications,
+    totalTickets,
+    openTickets,
+    resolvedTickets,
+    totalUsers,
+    unreadNotificationCount,
+  ]: [
     Array<{
       id: string;
       title: string;
@@ -36,6 +44,7 @@ export default async function DashboardPage({
       message: string;
       read: boolean;
     }>,
+    number,
     number,
     number,
     number,
@@ -56,6 +65,7 @@ export default async function DashboardPage({
       prisma.maintenanceTicket.count({ where: { status: "OPEN" } }),
       prisma.maintenanceTicket.count({ where: { status: "RESOLVED" } }),
       prisma.user.count(),
+      prisma.notification.count({ where: { userId: user.id, read: false } }),
     ]);
 
   return (
@@ -112,7 +122,10 @@ export default async function DashboardPage({
         <TabsList className="w-full justify-start border-b p-0" variant="line">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="notifications">
+            Notifications
+            {unreadNotificationCount > 0 ? ` (${unreadNotificationCount})` : ""}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -142,7 +155,7 @@ export default async function DashboardPage({
             <StatCard
               label="Campus users"
               value={
-                isAdmin ? totalUsers : notifications.filter((note) => !note.read).length
+                isAdmin ? totalUsers : unreadNotificationCount
               }
             />
           </section>
