@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  ADMINISTRATOR
+  MAINTENANCE_STAFF
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id             String              @id @default(cuid())
+  name           String
+  email          String              @unique
+  passwordHash   String
+  role           Role                @default(STUDENT)
+  studentId      String?
+  department     String?
+  phone          String?
+  sessionToken   String?             @unique
+  sessionExpires DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  tickets         MaintenanceTicket[] @relation("TicketRequester")
+  assignedTickets MaintenanceTicket[] @relation("TicketAssignee")
+  notifications   Notification[]
+}
+
+model MaintenanceTicket {
+  id           String         @id @default(cuid())
+  title        String
+  description  String
+  location     String
+  priority     TicketPriority @default(MEDIUM)
+  status       TicketStatus   @default(OPEN)
+  requesterId  String
+  assignedToId String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  requester    User           @relation("TicketRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  assignedTo   User?          @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
