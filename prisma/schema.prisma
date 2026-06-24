@@ -79,6 +79,18 @@ enum RegistrationStatus {
   CANCELLED
 }
 
+// Epic 6 (ANA-3): notification delivery channels and per-attempt status.
+enum DeliveryChannel {
+  IN_APP
+  EMAIL
+}
+
+enum DeliveryStatus {
+  SENT
+  FAILED
+  SKIPPED
+}
+
 model User {
   id             String              @id @default(cuid())
   name           String
@@ -254,4 +266,32 @@ model EventFeedback {
   student   User     @relation("EventFeedbackAuthor", fields: [studentId], references: [id], onDelete: Cascade)
 
   @@unique([eventId, studentId])
+}
+
+// Epic 6 (ANA-3): configurable notification triggers. A row is the persisted
+// override for a trigger defined in the in-code catalog (app/lib/notifications.ts);
+// triggers without a row fall back to their catalog defaults.
+model NotificationRule {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  inApp       Boolean  @default(true)
+  email       Boolean  @default(false)
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Epic 6 (ANA-3): per-attempt delivery log stub. Records the channel used and
+// the resulting status for in-app vs email delivery of a triggered notification.
+model NotificationDelivery {
+  id        String         @id @default(cuid())
+  ruleKey   String
+  channel   DeliveryChannel
+  status    DeliveryStatus
+  recipient String
+  detail    String?
+  createdAt DateTime       @default(now())
+
+  @@index([ruleKey])
+  @@index([createdAt])
 }
