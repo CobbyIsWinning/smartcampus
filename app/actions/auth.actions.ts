@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/app/lib/prisma";
 import { hashPassword, verifyPassword } from "@/app/lib/password";
-import { clearSession, createSession, requireRole, requireUser } from "@/app/lib/session";
+import { clearSession, createSession, isAppRole, requireRole, requireUser } from "@/app/lib/session";
 import { validateLoginInput, validateRegisterInput } from "@/app/lib/validation";
 
 function getString(formData: FormData, key: string) {
@@ -13,11 +13,7 @@ function getString(formData: FormData, key: string) {
 }
 
 function parseRole(value: string) {
-  if (value === "ADMINISTRATOR" || value === "MAINTENANCE_STAFF") {
-    return value;
-  }
-
-  return "STUDENT";
+  return isAppRole(value) ? value : "STUDENT";
 }
 
 export async function registerAction(formData: FormData) {

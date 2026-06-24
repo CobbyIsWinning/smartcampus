@@ -67,7 +67,9 @@ export function AppShell({
                     New Ticket
                   </Link>
                 </Button>
-                {user.role !== "STUDENT" ? (
+                {user.role === "ADMINISTRATOR" ||
+                user.role === "MAINTENANCE_STAFF" ||
+                user.role === "MAINTENANCE_SUPERVISOR" ? (
                   <>
                     <Button asChild size="sm" variant="ghost">
                       <Link href="/admin/maintenance">

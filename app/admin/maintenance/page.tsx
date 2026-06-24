@@ -26,7 +26,11 @@ export default async function AdminMaintenancePage({
   searchParams: Promise<{ updated?: string }>;
 }) {
   const params = await searchParams;
-  const user = await requireRole(["ADMINISTRATOR", "MAINTENANCE_STAFF"]);
+  const user = await requireRole([
+    "ADMINISTRATOR",
+    "MAINTENANCE_STAFF",
+    "MAINTENANCE_SUPERVISOR",
+  ]);
   const [tickets, staff]: [
     Array<{
       id: string;

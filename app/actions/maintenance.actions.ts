@@ -19,12 +19,21 @@ function parsePriority(value: string) {
   return "MEDIUM";
 }
 
-function parseStatus(value: string) {
-  if (value === "IN_PROGRESS" || value === "RESOLVED" || value === "CLOSED") {
-    return value;
-  }
+const TICKET_STATUSES = [
+  "OPEN",
+  "ASSIGNED",
+  "IN_PROGRESS",
+  "WAITING",
+  "RESOLVED",
+  "CLOSED",
+] as const;
 
-  return "OPEN";
+type TicketStatusValue = (typeof TICKET_STATUSES)[number];
+
+function parseStatus(value: string): TicketStatusValue {
+  return (TICKET_STATUSES as readonly string[]).includes(value)
+    ? (value as TicketStatusValue)
+    : "OPEN";
 }
 
 export async function createTicketAction(formData: FormData) {

@@ -3,7 +3,7 @@ import { ActionToast } from "@/app/components/action-toast";
 import { SubmitButton } from "@/app/components/submit-button";
 import { AppShell, Field, StatCard, StatusPill } from "@/app/components/ui";
 import { prisma } from "@/app/lib/prisma";
-import { requireRole } from "@/app/lib/session";
+import { APP_ROLES, ROLE_LABELS, requireRole } from "@/app/lib/session";
 import {
   Select,
   SelectContent,
@@ -158,11 +158,11 @@ export default async function AdminUsersPage({
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="STUDENT">Student</SelectItem>
-                              <SelectItem value="ADMINISTRATOR">Administrator</SelectItem>
-                              <SelectItem value="MAINTENANCE_STAFF">
-                                Maintenance staff
-                              </SelectItem>
+                              {APP_ROLES.map((role) => (
+                                <SelectItem key={role} value={role}>
+                                  {ROLE_LABELS[role]}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </Field>
