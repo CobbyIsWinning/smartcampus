@@ -94,6 +94,17 @@ listed for completeness but are not coding tasks.
 
 ---
 
+# Implementation progress
+
+- ✅ **Phase 0** — roles + ticket statuses expanded; centralized role list.
+- ✅ **Epic 2 (Facility Booking, FAC-2..7)** — integrated.
+- ✅ **Epic 3 (Asset Tracking, AST-2..7)** — integrated (QR is dependency-free token+scan page).
+- ✅ **Epic 5 (Campus Events, EVT-2..7)** — integrated (QR check-in via token page).
+- ✅ Landing page redesigned; login/register pages redesigned.
+- ⬜ **Remaining:** Epic 1 student-portal extensions (STU-2/3/4 gaps, STU-5/6/7), Epic 4 maintenance gaps (MNT-2/3/4/5/6/7), Epic 6 analytics (ANA-2..7), and Phase 0 primitives still unbuilt (email P0.5, upload P0.3).
+
+All integrated work verified: `tsc` clean, 56 unit tests pass, `next build` succeeds (20 routes). Migrations are hand-written (no local DB); run `prisma migrate deploy` against a real database.
+
 # Implementation backlog (ordered)
 
 Phases are ordered by dependency. Each task is a shippable unit; check off as
