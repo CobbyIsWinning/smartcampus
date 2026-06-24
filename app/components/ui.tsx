@@ -1,5 +1,7 @@
 import Link from "next/link";
 import {
+  BarChart3,
+  Bell,
   CalendarCog,
   CalendarDays,
   ChevronDown,
@@ -82,6 +84,12 @@ export function AppShell({
                     Events
                   </Link>
                 </Button>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/notifications">
+                    <Bell />
+                    Notifications
+                  </Link>
+                </Button>
                 {user.role === "FACULTY" ||
                 user.role === "ADMINISTRATOR" ||
                 user.role === "EVENT_ORGANIZER" ? (
@@ -127,6 +135,15 @@ export function AppShell({
                       </>
                     ) : null}
                   </>
+                ) : null}
+                {user.role === "ADMINISTRATOR" ||
+                user.role === "MAINTENANCE_SUPERVISOR" ? (
+                  <Button asChild size="sm" variant="ghost">
+                    <Link href="/admin/analytics">
+                      <BarChart3 />
+                      Analytics
+                    </Link>
+                  </Button>
                 ) : null}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
