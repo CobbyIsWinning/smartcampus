@@ -91,6 +91,25 @@ enum DeliveryStatus {
   SKIPPED
 }
 
+// Epic 1 (Student Portal) — STU-5/6/7 enums
+enum EnrollmentStatus {
+  ENROLLED
+  DROPPED
+  COMPLETED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum AcademicStatus {
+  COMPLETED
+  PENDING
+}
+
 model User {
   id             String              @id @default(cuid())
   name           String
@@ -100,6 +119,9 @@ model User {
   studentId      String?
   department     String?
   phone          String?
+  // Epic 1 (Student Portal) — STU-4 profile fields
+  address          String?
+  emergencyContact String?
   sessionToken   String?             @unique
   sessionExpires DateTime?
   createdAt      DateTime            @default(now())
@@ -117,6 +139,11 @@ model User {
   organizedEvents    Event[]             @relation("EventOrganizer")
   eventRegistrations EventRegistration[] @relation("EventAttendee")
   eventFeedback      EventFeedback[]     @relation("EventFeedbackAuthor")
+  // Epic 1 (Student Portal) — STU-3/5/6/7 back-references
+  passwordResets   PasswordReset[]
+  enrollments      Enrollment[]
+  attendance       Attendance[]
+  academicRecords  AcademicRecord[]
 }
 
 model MaintenanceTicket {
@@ -294,4 +321,85 @@ model NotificationDelivery {
 
   @@index([ruleKey])
   @@index([createdAt])
+}
+
+// --- Epic 1: Student Management Portal ---
+
+// STU-3 — single-use, time-limited password reset tokens
+model PasswordReset {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// STU-5 — course catalog
+model Course {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  title       String
+  description String?
+  department  String?
+  credits     Int              @default(3)
+  capacity    Int              @default(30)
+  semester    String
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  enrollments Enrollment[]
+  attendance  Attendance[]
+  records     AcademicRecord[]
+}
+
+// STU-5 — student course enrollment
+model Enrollment {
+  id        String           @id @default(cuid())
+  courseId  String
+  studentId String
+  status    EnrollmentStatus @default(ENROLLED)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student   User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+  @@index([studentId])
+}
+
+// STU-6 — per-session attendance marks
+model Attendance {
+  id        String           @id @default(cuid())
+  courseId  String
+  studentId String
+  date      DateTime
+  status    AttendanceStatus @default(PRESENT)
+  createdAt DateTime         @default(now())
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student   User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, studentId])
+  @@index([studentId])
+}
+
+// STU-7 — academic records / grades per course + semester
+model AcademicRecord {
+  id          String         @id @default(cuid())
+  courseId    String
+  studentId   String
+  semester    String
+  status      AcademicStatus @default(PENDING)
+  grade       String?
+  gradePoints Float?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  course      Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student     User           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId, semester])
+  @@index([studentId])
 }

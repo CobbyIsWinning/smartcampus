@@ -4,12 +4,48 @@ export type ValidationResult =
   | { ok: true }
   | { ok: false; error: string };
 
-export function validateRegisterInput(input: {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-}): ValidationResult {
+// Returns the lowercased domain part of an email, or "" when malformed.
+function emailDomain(email: string): string {
+  const at = email.lastIndexOf("@");
+  return at === -1 ? "" : email.slice(at + 1).toLowerCase();
+}
+
+/**
+ * STU-2 — when a non-empty allowlist is provided, the email must belong to one
+ * of the listed university domains (suffix match, so subdomains pass). An empty
+ * or omitted allowlist disables the check.
+ */
+export function isAllowedEmailDomain(
+  email: string,
+  allowedDomains?: string[],
+): boolean {
+  if (!allowedDomains || allowedDomains.length === 0) {
+    return true;
+  }
+
+  const domain = emailDomain(email);
+
+  return allowedDomains.some((allowed) => {
+    const normalized = allowed.trim().toLowerCase();
+    return (
+      normalized.length > 0 &&
+      (domain === normalized || domain.endsWith(`.${normalized}`))
+    );
+  });
+}
+
+export function validateRegisterInput(
+  input: {
+    name: string;
+    email: string;
+    password: string;
+    confirmPassword: string;
+    // STU-2 — optional academic fields captured at signup
+    studentId?: string;
+    department?: string;
+  },
+  options?: { allowedEmailDomains?: string[] },
+): ValidationResult {
   if (!input.name || !input.email || !input.password || !input.confirmPassword) {
     return { ok: false, error: "missing-fields" };
   }
@@ -20,6 +56,18 @@ export function validateRegisterInput(input: {
 
   if (!EMAIL_REGEX.test(input.email)) {
     return { ok: false, error: "invalid-email" };
+  }
+
+  if (!isAllowedEmailDomain(input.email, options?.allowedEmailDomains)) {
+    return { ok: false, error: "invalid-email-domain" };
+  }
+
+  if (input.studentId && (input.studentId.length < 3 || input.studentId.length > 40)) {
+    return { ok: false, error: "invalid-student-id" };
+  }
+
+  if (input.department && input.department.length > 120) {
+    return { ok: false, error: "invalid-department" };
   }
 
   if (input.password.length < 8) {
@@ -329,4 +377,127 @@ export function isEligible(
     requirement.includes(dept) ||
     dept.includes(requirement)
   );
+}
+
+// --- Epic 1: Student Management Portal ---
+
+// STU-3 — password reset request (email only)
+export function validatePasswordResetRequestInput(input: {
+  email: string;
+}): ValidationResult {
+  if (!input.email) {
+    return { ok: false, error: "missing-fields" };
+  }
+
+  if (!EMAIL_REGEX.test(input.email)) {
+    return { ok: false, error: "invalid-email" };
+  }
+
+  return { ok: true };
+}
+
+// STU-3 — choosing a new password from a reset link
+export function validateResetPasswordInput(input: {
+  password: string;
+  confirmPassword: string;
+}): ValidationResult {
+  if (!input.password || !input.confirmPassword) {
+    return { ok: false, error: "missing-fields" };
+  }
+
+  if (input.password.length < 8) {
+    return { ok: false, error: "weak-password" };
+  }
+
+  if (input.password !== input.confirmPassword) {
+    return { ok: false, error: "password-mismatch" };
+  }
+
+  return { ok: true };
+}
+
+// STU-5 — course catalog entry (admin / faculty)
+export function validateCourseInput(input: {
+  code: string;
+  title: string;
+  semester: string;
+  credits: number;
+  capacity: number;
+}): ValidationResult {
+  if (!input.code || !input.title || !input.semester) {
+    return { ok: false, error: "missing-fields" };
+  }
+
+  if (input.code.length < 2 || input.code.length > 20) {
+    return { ok: false, error: "invalid-code" };
+  }
+
+  if (input.title.length < 3 || input.title.length > 120) {
+    return { ok: false, error: "invalid-title" };
+  }
+
+  if (input.semester.length < 3 || input.semester.length > 40) {
+    return { ok: false, error: "invalid-semester" };
+  }
+
+  if (!Number.isInteger(input.credits) || input.credits < 1 || input.credits > 12) {
+    return { ok: false, error: "invalid-credits" };
+  }
+
+  if (!Number.isInteger(input.capacity) || input.capacity < 1 || input.capacity > 100000) {
+    return { ok: false, error: "invalid-capacity" };
+  }
+
+  return { ok: true };
+}
+
+// STU-6 — attendance percentage helpers.
+export const LOW_ATTENDANCE_THRESHOLD = 75;
+
+// Whole-number attendance percentage. Present + late count as attended;
+// excused sessions are removed from the denominator. Returns 100 when there
+// are no recorded sessions (nothing to be alarmed about yet).
+export function attendancePercentage(input: {
+  present: number;
+  late: number;
+  absent: number;
+  excused: number;
+}): number {
+  const counted = input.present + input.late + input.absent;
+
+  if (counted <= 0) {
+    return 100;
+  }
+
+  return Math.round(((input.present + input.late) / counted) * 100);
+}
+
+export function isLowAttendance(
+  percentage: number,
+  threshold: number = LOW_ATTENDANCE_THRESHOLD,
+): boolean {
+  return percentage < threshold;
+}
+
+// STU-7 — GPA (4.0 scale) weighted by course credits over completed records.
+// Returns 0 when there are no graded credits.
+export function computeGpa(
+  records: Array<{ gradePoints: number | null; credits: number }>,
+): number {
+  let totalPoints = 0;
+  let totalCredits = 0;
+
+  for (const record of records) {
+    if (record.gradePoints === null || record.credits <= 0) {
+      continue;
+    }
+    totalPoints += record.gradePoints * record.credits;
+    totalCredits += record.credits;
+  }
+
+  if (totalCredits === 0) {
+    return 0;
+  }
+
+  return Math.round((totalPoints / totalCredits) * 100) / 100;
 }
