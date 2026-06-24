@@ -94,16 +94,24 @@ listed for completeness but are not coding tasks.
 
 ---
 
-# Implementation progress
+# Implementation progress — ALL EPICS COMPLETE
 
 - ✅ **Phase 0** — roles + ticket statuses expanded; centralized role list.
-- ✅ **Epic 2 (Facility Booking, FAC-2..7)** — integrated.
-- ✅ **Epic 3 (Asset Tracking, AST-2..7)** — integrated (QR is dependency-free token+scan page).
-- ✅ **Epic 5 (Campus Events, EVT-2..7)** — integrated (QR check-in via token page).
-- ✅ Landing page redesigned; login/register pages redesigned.
-- ⬜ **Remaining:** Epic 1 student-portal extensions (STU-2/3/4 gaps, STU-5/6/7), Epic 4 maintenance gaps (MNT-2/3/4/5/6/7), Epic 6 analytics (ANA-2..7), and Phase 0 primitives still unbuilt (email P0.5, upload P0.3).
+- ✅ **Epic 1 (Student Portal, STU-2..7)** — registration gaps, password reset, profile fields, courses, attendance, academic records.
+- ✅ **Epic 2 (Facility Booking, FAC-2..7)**.
+- ✅ **Epic 3 (Asset Tracking, AST-2..7)** — QR is a dependency-free token+scan page.
+- ✅ **Epic 4 (Maintenance gaps, MNT-2..7)** — category/room/photos, technician queue + tasks, SLA (URGENT labeled "Critical"), feedback + reopen.
+- ✅ **Epic 5 (Campus Events, EVT-2..7)** — QR check-in via token page.
+- ✅ **Epic 6 (Analytics & Notifications, ANA-2..7)** — reports + CSV export (dependency-free charts), notification center/rules/delivery log.
+- ✅ Landing, login, and register pages redesigned.
+- ✅ Phase 0 primitives: `app/lib/email.ts` (P0.5 stub), `app/lib/upload.ts` (P0.3), `app/lib/qr.ts` (P0.4).
 
-All integrated work verified: `tsc` clean, 56 unit tests pass, `next build` succeeds (20 routes). Migrations are hand-written (no local DB); run `prisma migrate deploy` against a real database.
+**Full integration verified:** `tsc` clean, **125 unit tests pass** (9 files), `npm run lint` clean, `next build` succeeds (~35 routes).
+
+**Remaining caveats / follow-ups (not blocking):**
+- Migrations are hand-written (no local DB) — run `prisma migrate deploy` against a real Neon database, in timestamp order.
+- Optional spec extras deferred: profile-photo upload + printable transcript (STU-4/7); PDF/Excel export (ANA-7, CSV shipped). Real blob storage + email provider need wiring behind the existing stubs.
+- ANA-4/ANA-6 reports were built against available data; now that Epic 1/4 fields exist they can be enriched (enrollment/attendance risk, SLA breach, feedback ratings).
 
 # Implementation backlog (ordered)
 
