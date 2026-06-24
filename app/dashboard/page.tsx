@@ -79,9 +79,16 @@ export default async function DashboardPage({
             Welcome, {user.name}
           </h1>
         </div>
-        <Button asChild>
-          <Link href="/maintenance/new">Create maintenance ticket</Link>
-        </Button>
+        <div className="flex flex-wrap gap-3">
+          {user.role === "ADMINISTRATOR" ? (
+            <Button asChild variant="outline">
+              <Link href="/assets">Asset inventory</Link>
+            </Button>
+          ) : null}
+          <Button asChild>
+            <Link href="/maintenance/new">Create maintenance ticket</Link>
+          </Button>
+        </div>
       </div>
       <ActionToast
         specs={[

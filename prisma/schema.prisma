@@ -31,6 +31,28 @@ enum TicketPriority {
   URGENT
 }
 
+enum AssetStatus {
+  AVAILABLE
+  ASSIGNED
+  UNDER_MAINTENANCE
+  UNDER_REVIEW
+  LOST
+  RETIRED
+  DISPOSED
+}
+
+enum AssetChangeType {
+  CREATED
+  LOCATION_CHANGED
+  ALLOCATED
+  RETURNED
+  TRANSFER_REQUESTED
+  TRANSFER_APPROVED
+  TRANSFER_REJECTED
+  STATUS_CHANGED
+  SCANNED
+}
+
 model User {
   id             String              @id @default(cuid())
   name           String
@@ -47,6 +69,10 @@ model User {
   tickets         MaintenanceTicket[] @relation("TicketRequester")
   assignedTickets MaintenanceTicket[] @relation("TicketAssignee")
   notifications   Notification[]
+  // Epic 3 (Asset Tracking) back-references — see asset.actions.ts. Group for merge reconciliation.
+  allocatedAssets     Asset[]        @relation("AssetAssignee")
+  transferAssets      Asset[]        @relation("AssetTransferTarget")
+  assetHistoryEntries AssetHistory[] @relation("AssetHistoryActor")
 }
 
 model MaintenanceTicket {
@@ -72,4 +98,46 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Asset {
+  id                   String         @id @default(cuid())
+  assetId              String         @unique
+  qrToken              String         @unique
+  name                 String
+  category             String
+  serialNumber         String         @unique
+  purchaseDate         DateTime?
+  cost                 Float?
+  condition            String?
+  status               AssetStatus    @default(AVAILABLE)
+  owningDepartment     String?
+  building             String?
+  room                 String?
+  storage              String?
+  location             String?
+  assignedToId         String?
+  responsiblePerson    String?
+  assignedDate         DateTime?
+  transferToId         String?
+  transferToDepartment String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  assignedTo           User?          @relation("AssetAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  transferTo           User?          @relation("AssetTransferTarget", fields: [transferToId], references: [id], onDelete: SetNull)
+  history              AssetHistory[]
+}
+
+model AssetHistory {
+  id            String          @id @default(cuid())
+  assetId       String
+  changeType    AssetChangeType
+  field         String?
+  previousValue String?
+  newValue      String?
+  note          String?
+  actedById     String?
+  createdAt     DateTime        @default(now())
+  asset         Asset           @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  actedBy       User?           @relation("AssetHistoryActor", fields: [actedById], references: [id], onDelete: SetNull)
 }

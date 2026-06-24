@@ -71,3 +71,60 @@ export function validateTicketInput(input: {
 
   return { ok: true };
 }
+
+export function validateAssetInput(input: {
+  name: string;
+  category: string;
+  serialNumber: string;
+  cost: string;
+}): ValidationResult {
+  if (!input.name || !input.category || !input.serialNumber) {
+    return { ok: false, error: "missing-fields" };
+  }
+
+  if (input.name.length < 2 || input.name.length > 120) {
+    return { ok: false, error: "invalid-name" };
+  }
+
+  if (input.category.length < 2 || input.category.length > 80) {
+    return { ok: false, error: "invalid-category" };
+  }
+
+  if (input.serialNumber.length < 2 || input.serialNumber.length > 120) {
+    return { ok: false, error: "invalid-serial" };
+  }
+
+  if (input.cost) {
+    const cost = Number(input.cost);
+    if (!Number.isFinite(cost) || cost < 0) {
+      return { ok: false, error: "invalid-cost" };
+    }
+  }
+
+  return { ok: true };
+}
+
+export function validateAllocationInput(input: {
+  assigneeId: string;
+  responsiblePerson: string;
+}): ValidationResult {
+  if (!input.assigneeId || !input.responsiblePerson) {
+    return { ok: false, error: "missing-fields" };
+  }
+
+  if (input.responsiblePerson.length < 2 || input.responsiblePerson.length > 120) {
+    return { ok: false, error: "invalid-responsible-person" };
+  }
+
+  return { ok: true };
+}
+
+export function validateTransferInput(input: {
+  transferToId: string;
+}): ValidationResult {
+  if (!input.transferToId) {
+    return { ok: false, error: "missing-transfer-target" };
+  }
+
+  return { ok: true };
+}
