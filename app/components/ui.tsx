@@ -1,5 +1,7 @@
 import Link from "next/link";
 import {
+  CalendarCog,
+  CalendarDays,
   ChevronDown,
   LayoutDashboard,
   LogOut,
@@ -67,6 +69,22 @@ export function AppShell({
                     New Ticket
                   </Link>
                 </Button>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/events">
+                    <CalendarDays />
+                    Events
+                  </Link>
+                </Button>
+                {user.role === "FACULTY" ||
+                user.role === "ADMINISTRATOR" ||
+                user.role === "EVENT_ORGANIZER" ? (
+                  <Button asChild size="sm" variant="ghost">
+                    <Link href="/events/manage">
+                      <CalendarCog />
+                      Manage Events
+                    </Link>
+                  </Button>
+                ) : null}
                 {user.role === "ADMINISTRATOR" ||
                 user.role === "MAINTENANCE_STAFF" ||
                 user.role === "MAINTENANCE_SUPERVISOR" ? (

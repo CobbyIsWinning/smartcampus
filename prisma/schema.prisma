@@ -31,6 +31,18 @@ enum TicketPriority {
   URGENT
 }
 
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+}
+
+enum RegistrationStatus {
+  REGISTERED
+  WAITLISTED
+  CANCELLED
+}
+
 model User {
   id             String              @id @default(cuid())
   name           String
@@ -47,6 +59,11 @@ model User {
   tickets         MaintenanceTicket[] @relation("TicketRequester")
   assignedTickets MaintenanceTicket[] @relation("TicketAssignee")
   notifications   Notification[]
+  // --- Epic 5 (Events) back-references — reconcile on merge ---
+  organizedEvents    Event[]             @relation("EventOrganizer")
+  eventRegistrations EventRegistration[] @relation("EventAttendee")
+  eventFeedback      EventFeedback[]     @relation("EventFeedbackAuthor")
+  // --- end Epic 5 back-references ---
 }
 
 model MaintenanceTicket {
@@ -72,4 +89,51 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Event {
+  id            String              @id @default(cuid())
+  title         String
+  description   String
+  category      String
+  startsAt      DateTime
+  endsAt        DateTime
+  venue         String
+  capacity      Int
+  eligibility   String?
+  status        EventStatus         @default(DRAFT)
+  checkInToken  String              @unique @default(cuid())
+  organizerId   String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  organizer     User                @relation("EventOrganizer", fields: [organizerId], references: [id], onDelete: Cascade)
+  registrations EventRegistration[]
+  feedback      EventFeedback[]
+}
+
+model EventRegistration {
+  id          String             @id @default(cuid())
+  eventId     String
+  studentId   String
+  status      RegistrationStatus @default(REGISTERED)
+  checkedInAt DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  event       Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  student     User               @relation("EventAttendee", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, studentId])
+}
+
+model EventFeedback {
+  id        String   @id @default(cuid())
+  eventId   String
+  studentId String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  student   User     @relation("EventFeedbackAuthor", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, studentId])
 }
