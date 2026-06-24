@@ -108,18 +108,37 @@ model User {
 }
 
 model MaintenanceTicket {
-  id           String         @id @default(cuid())
-  title        String
-  description  String
-  location     String
-  priority     TicketPriority @default(MEDIUM)
-  status       TicketStatus   @default(OPEN)
-  requesterId  String
-  assignedToId String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  requester    User           @relation("TicketRequester", fields: [requesterId], references: [id], onDelete: Cascade)
-  assignedTo   User?          @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  id              String          @id @default(cuid())
+  ticketNo        String          @unique
+  title           String
+  description     String
+  category        String?
+  location        String
+  building        String?
+  roomNumber      String?
+  imageUrls       String[]        @default([])
+  priority        TicketPriority  @default(MEDIUM)
+  status          TicketStatus    @default(OPEN)
+  slaDueAt        DateTime?
+  slaBreached     Boolean         @default(false)
+  reopenRequested Boolean         @default(false)
+  reopenReason    String?
+  requesterId     String
+  assignedToId    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  requester       User            @relation("TicketRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  assignedTo      User?           @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  feedback        TicketFeedback?
+}
+
+model TicketFeedback {
+  id        String            @id @default(cuid())
+  ticketId  String            @unique
+  rating    Int
+  comment   String?
+  createdAt DateTime          @default(now())
+  ticket    MaintenanceTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }
 
 model Notification {

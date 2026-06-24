@@ -110,6 +110,15 @@ export function AppShell({
                         Manage Tickets
                       </Link>
                     </Button>
+                    {user.role === "MAINTENANCE_STAFF" ||
+                    user.role === "MAINTENANCE_SUPERVISOR" ? (
+                      <Button asChild size="sm" variant="ghost">
+                        <Link href="/maintenance/tasks">
+                          <Settings />
+                          My Tasks
+                        </Link>
+                      </Button>
+                    ) : null}
                     {user.role === "ADMINISTRATOR" ? (
                       <>
                         <Button asChild size="sm" variant="ghost">

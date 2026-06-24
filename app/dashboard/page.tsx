@@ -274,7 +274,12 @@ export default async function DashboardPage({
                     <article className="py-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <h3 className="font-semibold">{ticket.title}</h3>
+                          <Link
+                            href={`/maintenance/${ticket.id}`}
+                            className="font-semibold underline-offset-2 hover:underline"
+                          >
+                            {ticket.title}
+                          </Link>
                           <p className="mt-1 text-sm text-muted-foreground">
                             {ticket.location} · requested by {ticket.requester.name}
                           </p>
