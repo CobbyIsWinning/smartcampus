@@ -53,6 +53,20 @@ enum AssetChangeType {
   SCANNED
 }
 
+enum FacilityCategory {
+  ROOM
+  LAB
+  HALL
+  SPORTS
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 model User {
   id             String              @id @default(cuid())
   name           String
@@ -69,7 +83,9 @@ model User {
   tickets         MaintenanceTicket[] @relation("TicketRequester")
   assignedTickets MaintenanceTicket[] @relation("TicketAssignee")
   notifications   Notification[]
-  // Epic 3 (Asset Tracking) back-references — see asset.actions.ts. Group for merge reconciliation.
+  // Epic 2 (Facility Booking) back-reference
+  bookings        Booking[]
+  // Epic 3 (Asset Tracking) back-references — see asset.actions.ts.
   allocatedAssets     Asset[]        @relation("AssetAssignee")
   transferAssets      Asset[]        @relation("AssetTransferTarget")
   assetHistoryEntries AssetHistory[] @relation("AssetHistoryActor")
@@ -140,4 +156,39 @@ model AssetHistory {
   createdAt     DateTime        @default(now())
   asset         Asset           @relation(fields: [assetId], references: [id], onDelete: Cascade)
   actedBy       User?           @relation("AssetHistoryActor", fields: [actedById], references: [id], onDelete: SetNull)
+}
+
+model Facility {
+  id          String           @id @default(cuid())
+  name        String
+  category    FacilityCategory @default(ROOM)
+  capacity    Int              @default(0)
+  building    String
+  location    String
+  equipment   String?
+  description String?
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  bookings    Booking[]
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  facilityId      String
+  requesterId     String
+  date            DateTime
+  startTime       String
+  endTime         String
+  purpose         String
+  attendeeCount   Int           @default(1)
+  status          BookingStatus @default(PENDING)
+  decisionComment String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  facility        Facility      @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  requester       User          @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+
+  @@index([facilityId, date])
+  @@index([requesterId])
 }
