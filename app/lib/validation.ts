@@ -71,3 +71,97 @@ export function validateTicketInput(input: {
 
   return { ok: true };
 }
+
+const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+export function validateFacilityInput(input: {
+  name: string;
+  capacity: number;
+  building: string;
+  location: string;
+}): ValidationResult {
+  if (!input.name || !input.building || !input.location) {
+    return { ok: false, error: "missing-fields" };
+  }
+
+  if (input.name.length < 2 || input.name.length > 120) {
+    return { ok: false, error: "invalid-name" };
+  }
+
+  if (input.building.length < 2 || input.building.length > 120) {
+    return { ok: false, error: "invalid-building" };
+  }
+
+  if (input.location.length < 2 || input.location.length > 120) {
+    return { ok: false, error: "invalid-location" };
+  }
+
+  if (
+    !Number.isInteger(input.capacity) ||
+    input.capacity < 1 ||
+    input.capacity > 100000
+  ) {
+    return { ok: false, error: "invalid-capacity" };
+  }
+
+  return { ok: true };
+}
+
+export function validateBookingInput(input: {
+  date: string;
+  startTime: string;
+  endTime: string;
+  purpose: string;
+  attendeeCount: number;
+}): ValidationResult {
+  if (!input.date || !input.startTime || !input.endTime || !input.purpose) {
+    return { ok: false, error: "missing-fields" };
+  }
+
+  if (!DATE_REGEX.test(input.date)) {
+    return { ok: false, error: "invalid-date" };
+  }
+
+  if (!TIME_REGEX.test(input.startTime) || !TIME_REGEX.test(input.endTime)) {
+    return { ok: false, error: "invalid-time" };
+  }
+
+  if (input.startTime >= input.endTime) {
+    return { ok: false, error: "invalid-time-range" };
+  }
+
+  if (input.purpose.length < 4 || input.purpose.length > 500) {
+    return { ok: false, error: "invalid-purpose" };
+  }
+
+  if (!Number.isInteger(input.attendeeCount) || input.attendeeCount < 1) {
+    return { ok: false, error: "invalid-attendees" };
+  }
+
+  return { ok: true };
+}
+
+// A slot is in the past when its start instant is earlier than `now`.
+// `date` is a yyyy-mm-dd string and `startTime` is an HH:MM string.
+export function isBookingSlotInPast(
+  input: { date: string; startTime: string },
+  now: Date = new Date(),
+): boolean {
+  const slotStart = new Date(`${input.date}T${input.startTime}`);
+
+  if (Number.isNaN(slotStart.getTime())) {
+    return true;
+  }
+
+  return slotStart.getTime() < now.getTime();
+}
+
+// Two same-day slots overlap when each starts before the other ends.
+// Times are HH:MM strings, which compare correctly lexicographically.
+export function bookingSlotsOverlap(
+  a: { startTime: string; endTime: string },
+  b: { startTime: string; endTime: string },
+): boolean {
+  return a.startTime < b.endTime && b.startTime < a.endTime;
+}

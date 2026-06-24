@@ -31,6 +31,20 @@ enum TicketPriority {
   URGENT
 }
 
+enum FacilityCategory {
+  ROOM
+  LAB
+  HALL
+  SPORTS
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
 model User {
   id             String              @id @default(cuid())
   name           String
@@ -47,6 +61,7 @@ model User {
   tickets         MaintenanceTicket[] @relation("TicketRequester")
   assignedTickets MaintenanceTicket[] @relation("TicketAssignee")
   notifications   Notification[]
+  bookings        Booking[]
 }
 
 model MaintenanceTicket {
@@ -72,4 +87,39 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Facility {
+  id          String           @id @default(cuid())
+  name        String
+  category    FacilityCategory @default(ROOM)
+  capacity    Int              @default(0)
+  building    String
+  location    String
+  equipment   String?
+  description String?
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  bookings    Booking[]
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  facilityId      String
+  requesterId     String
+  date            DateTime
+  startTime       String
+  endTime         String
+  purpose         String
+  attendeeCount   Int           @default(1)
+  status          BookingStatus @default(PENDING)
+  decisionComment String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  facility        Facility      @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  requester       User          @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+
+  @@index([facilityId, date])
+  @@index([requesterId])
 }
