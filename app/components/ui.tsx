@@ -3,6 +3,7 @@ import {
   ChevronDown,
   LayoutDashboard,
   LogOut,
+  Package,
   Plus,
   Settings,
   Users,
@@ -67,6 +68,14 @@ export function AppShell({
                     New Ticket
                   </Link>
                 </Button>
+                {user.role === "ADMINISTRATOR" ? (
+                  <Button asChild size="sm" variant="ghost">
+                    <Link href="/assets">
+                      <Package />
+                      Assets
+                    </Link>
+                  </Button>
+                ) : null}
                 {user.role === "ADMINISTRATOR" ||
                 user.role === "MAINTENANCE_STAFF" ||
                 user.role === "MAINTENANCE_SUPERVISOR" ? (
@@ -112,9 +121,14 @@ export function AppShell({
                       <Link href="/maintenance/new">New ticket</Link>
                     </DropdownMenuItem>
                     {user.role === "ADMINISTRATOR" ? (
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin/users">Users</Link>
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/assets">Assets</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/users">Users</Link>
+                        </DropdownMenuItem>
+                      </>
                     ) : null}
                     <DropdownMenuSeparator />
                     <form action={logoutAction} className="px-1.5 py-1">
