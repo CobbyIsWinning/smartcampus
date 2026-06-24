@@ -104,6 +104,12 @@ export default async function LoginPage({
                   message: "You have been signed out.",
                   type: "success",
                 },
+                {
+                  key: "message",
+                  value: "password-reset",
+                  message: "Password updated. Sign in with your new password.",
+                  type: "success",
+                },
                 ...(error
                   ? [
                       {
@@ -132,6 +138,11 @@ export default async function LoginPage({
               <Field label="Password">
                 <PasswordField autoComplete="current-password" name="password" />
               </Field>
+              <div className="-mt-1 text-right">
+                <Button asChild className="h-auto px-0" size="sm" variant="link">
+                  <Link href="/forgot-password">Forgot password?</Link>
+                </Button>
+              </div>
               <SubmitButton className="mt-2 w-full" loadingText="Signing in...">
                 Sign in
               </SubmitButton>

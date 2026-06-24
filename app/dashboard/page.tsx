@@ -53,6 +53,7 @@ export default async function DashboardPage({
     "invalid-time": "Enter valid start and end times.",
     "invalid-date": "Choose a valid date.",
     "missing-fields": "Date and time are required.",
+    "student-id-exists": "That student ID is already registered.",
   };
 
   const [
@@ -417,6 +418,16 @@ export default async function DashboardPage({
               </Field>
               <Field label="Phone">
                 <Input name="phone" defaultValue={user.phone ?? ""} />
+              </Field>
+              <Field label="Address">
+                <Input name="address" defaultValue={user.address ?? ""} />
+              </Field>
+              <Field label="Emergency contact">
+                <Input
+                  name="emergencyContact"
+                  defaultValue={user.emergencyContact ?? ""}
+                  placeholder="Name and phone number"
+                />
               </Field>
               <SubmitButton loadingText="Saving..." variant="secondary">
                 Update profile

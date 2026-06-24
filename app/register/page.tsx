@@ -28,8 +28,12 @@ const errorMessages: Record<string, string> = {
     "Enter a name, email, and password with at least 8 characters.",
   "invalid-name": "Enter a full name between 2 and 80 characters.",
   "invalid-email": "Enter a valid email address.",
+  "invalid-email-domain": "Use your university email address.",
+  "invalid-student-id": "Student ID must be between 3 and 40 characters.",
+  "invalid-department": "Department must be 120 characters or fewer.",
   "weak-password": "Password must be at least 8 characters long.",
   "email-exists": "An account with that email already exists.",
+  "student-id-exists": "That student ID is already registered.",
   "password-mismatch": "Password and confirmation do not match.",
 };
 
@@ -139,6 +143,14 @@ export default async function RegisterPage({
                   type="email"
                 />
               </Field>
+              <div className="grid gap-5 sm:grid-cols-2">
+                <Field label="Student ID">
+                  <Input name="studentId" placeholder="S1234567" />
+                </Field>
+                <Field label="Department">
+                  <Input name="department" placeholder="Computer Science" />
+                </Field>
+              </div>
               <Field label="Password">
                 <PasswordField
                   autoComplete="new-password"

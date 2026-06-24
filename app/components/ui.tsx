@@ -1,8 +1,11 @@
 import Link from "next/link";
 import {
+  BookOpen,
   CalendarCog,
   CalendarDays,
   ChevronDown,
+  ClipboardCheck,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
   Package,
@@ -82,6 +85,24 @@ export function AppShell({
                     Events
                   </Link>
                 </Button>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/courses">
+                    <BookOpen />
+                    Courses
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/attendance">
+                    <ClipboardCheck />
+                    Attendance
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/records">
+                    <GraduationCap />
+                    Records
+                  </Link>
+                </Button>
                 {user.role === "FACULTY" ||
                 user.role === "ADMINISTRATOR" ||
                 user.role === "EVENT_ORGANIZER" ? (
@@ -89,6 +110,14 @@ export function AppShell({
                     <Link href="/events/manage">
                       <CalendarCog />
                       Manage Events
+                    </Link>
+                  </Button>
+                ) : null}
+                {user.role === "FACULTY" || user.role === "ADMINISTRATOR" ? (
+                  <Button asChild size="sm" variant="ghost">
+                    <Link href="/admin/courses">
+                      <BookOpen />
+                      Course Catalog
                     </Link>
                   </Button>
                 ) : null}

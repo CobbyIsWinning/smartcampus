@@ -1,14 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
+  attendancePercentage,
   bookingSlotsOverlap,
+  computeGpa,
+  isAllowedEmailDomain,
   isBookingSlotInPast,
   isEligible,
+  isLowAttendance,
   validateAllocationInput,
   validateAssetInput,
   validateBookingInput,
+  validateCourseInput,
   validateEventFeedbackInput,
   validateEventInput,
   validateFacilityInput,
+  validatePasswordResetRequestInput,
+  validateRegisterInput,
+  validateResetPasswordInput,
   validateTransferInput,
 } from "@/app/lib/validation";
 
@@ -314,5 +322,164 @@ describe("isEligible", () => {
     expect(isEligible("Science", "Computer Science")).toBe(true);
     expect(isEligible("Computer Science", "Biology")).toBe(false);
     expect(isEligible("Computer Science", null)).toBe(false);
+  });
+});
+
+// --- Epic 1: Student Management Portal ---
+
+describe("isAllowedEmailDomain", () => {
+  it("allows any email when no allowlist is given", () => {
+    expect(isAllowedEmailDomain("a@gmail.com")).toBe(true);
+    expect(isAllowedEmailDomain("a@gmail.com", [])).toBe(true);
+  });
+
+  it("accepts an exact domain match and subdomains", () => {
+    expect(isAllowedEmailDomain("a@campus.edu", ["campus.edu"])).toBe(true);
+    expect(isAllowedEmailDomain("a@cs.campus.edu", ["campus.edu"])).toBe(true);
+  });
+
+  it("rejects a non-matching domain", () => {
+    expect(isAllowedEmailDomain("a@gmail.com", ["campus.edu"])).toBe(false);
+  });
+});
+
+describe("validateRegisterInput", () => {
+  const base = {
+    name: "Ada Lovelace",
+    email: "ada@campus.edu",
+    password: "password123",
+    confirmPassword: "password123",
+  };
+
+  it("accepts a valid signup", () => {
+    expect(validateRegisterInput(base)).toEqual({ ok: true });
+  });
+
+  it("enforces the email-domain allowlist when configured", () => {
+    expect(
+      validateRegisterInput(
+        { ...base, email: "ada@gmail.com" },
+        { allowedEmailDomains: ["campus.edu"] },
+      ),
+    ).toEqual({ ok: false, error: "invalid-email-domain" });
+  });
+
+  it("rejects a too-short student id", () => {
+    expect(validateRegisterInput({ ...base, studentId: "ab" })).toEqual({
+      ok: false,
+      error: "invalid-student-id",
+    });
+  });
+
+  it("accepts an optional student id and department", () => {
+    expect(
+      validateRegisterInput({ ...base, studentId: "S12345", department: "CS" }),
+    ).toEqual({ ok: true });
+  });
+});
+
+describe("validatePasswordResetRequestInput", () => {
+  it("requires a valid email", () => {
+    expect(validatePasswordResetRequestInput({ email: "" })).toEqual({
+      ok: false,
+      error: "missing-fields",
+    });
+    expect(validatePasswordResetRequestInput({ email: "nope" })).toEqual({
+      ok: false,
+      error: "invalid-email",
+    });
+    expect(
+      validatePasswordResetRequestInput({ email: "a@campus.edu" }),
+    ).toEqual({ ok: true });
+  });
+});
+
+describe("validateResetPasswordInput", () => {
+  it("requires a strong, matching password", () => {
+    expect(
+      validateResetPasswordInput({ password: "short", confirmPassword: "short" }),
+    ).toEqual({ ok: false, error: "weak-password" });
+    expect(
+      validateResetPasswordInput({
+        password: "password123",
+        confirmPassword: "different123",
+      }),
+    ).toEqual({ ok: false, error: "password-mismatch" });
+    expect(
+      validateResetPasswordInput({
+        password: "password123",
+        confirmPassword: "password123",
+      }),
+    ).toEqual({ ok: true });
+  });
+});
+
+describe("validateCourseInput", () => {
+  const base = {
+    code: "CS101",
+    title: "Intro to CS",
+    semester: "Fall 2026",
+    credits: 3,
+    capacity: 30,
+  };
+
+  it("accepts a valid course", () => {
+    expect(validateCourseInput(base)).toEqual({ ok: true });
+  });
+
+  it("rejects missing fields", () => {
+    expect(validateCourseInput({ ...base, code: "" })).toEqual({
+      ok: false,
+      error: "missing-fields",
+    });
+  });
+
+  it("rejects out-of-range credits and capacity", () => {
+    expect(validateCourseInput({ ...base, credits: 0 })).toEqual({
+      ok: false,
+      error: "invalid-credits",
+    });
+    expect(validateCourseInput({ ...base, capacity: 0 })).toEqual({
+      ok: false,
+      error: "invalid-capacity",
+    });
+  });
+});
+
+describe("attendancePercentage", () => {
+  it("returns 100 when nothing is recorded", () => {
+    expect(
+      attendancePercentage({ present: 0, late: 0, absent: 0, excused: 0 }),
+    ).toBe(100);
+  });
+
+  it("counts present and late as attended, excludes excused", () => {
+    expect(
+      attendancePercentage({ present: 7, late: 1, absent: 2, excused: 5 }),
+    ).toBe(80);
+  });
+});
+
+describe("isLowAttendance", () => {
+  it("flags percentages below the threshold", () => {
+    expect(isLowAttendance(74)).toBe(true);
+    expect(isLowAttendance(75)).toBe(false);
+    expect(isLowAttendance(60, 50)).toBe(false);
+  });
+});
+
+describe("computeGpa", () => {
+  it("returns 0 with no graded credits", () => {
+    expect(computeGpa([])).toBe(0);
+    expect(computeGpa([{ gradePoints: null, credits: 3 }])).toBe(0);
+  });
+
+  it("weights grade points by credits", () => {
+    expect(
+      computeGpa([
+        { gradePoints: 4, credits: 3 },
+        { gradePoints: 3, credits: 1 },
+      ]),
+    ).toBe(3.75);
   });
 });

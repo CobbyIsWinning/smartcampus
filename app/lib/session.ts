@@ -33,7 +33,15 @@ export function isAppRole(value: string): value is AppRole {
 
 export type CurrentUser = Pick<
   User,
-  "id" | "name" | "email" | "role" | "studentId" | "department" | "phone"
+  | "id"
+  | "name"
+  | "email"
+  | "role"
+  | "studentId"
+  | "department"
+  | "phone"
+  | "address"
+  | "emergencyContact"
 >;
 
 export async function createSession(userId: string) {
@@ -97,6 +105,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       studentId: true,
       department: true,
       phone: true,
+      address: true,
+      emergencyContact: true,
     },
   });
 
