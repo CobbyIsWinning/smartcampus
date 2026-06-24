@@ -1,5 +1,9 @@
 import Link from "next/link";
 import { updateProfileAction } from "@/app/actions/auth.actions";
+import {
+  cancelBookingAction,
+  rescheduleBookingAction,
+} from "@/app/actions/facility.actions";
 import { markNotificationsReadAction } from "@/app/actions/maintenance.actions";
 import { ActionToast } from "@/app/components/action-toast";
 import { SubmitButton } from "@/app/components/submit-button";
@@ -14,12 +18,43 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ profile?: string; ticket?: string; welcome?: string }>;
+  searchParams: Promise<{
+    profile?: string;
+    ticket?: string;
+    welcome?: string;
+    booking?: string;
+    error?: string;
+  }>;
 }) {
   const params = await searchParams;
   const user = await requireUser();
   const isAdmin =
     user.role === "ADMINISTRATOR" || user.role === "MAINTENANCE_STAFF";
+
+  const bookings = await prisma.booking.findMany({
+    where: { requesterId: user.id },
+    include: { facility: true },
+    orderBy: [{ date: "desc" }, { startTime: "desc" }],
+    take: 12,
+  });
+  const now = new Date();
+  const todayString = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+  )
+    .toISOString()
+    .slice(0, 10);
+  const bookingErrorMessages: Record<string, string> = {
+    "booking-not-found": "Booking not found.",
+    "booking-not-cancellable": "That booking can no longer be cancelled.",
+    "booking-not-reschedulable": "That booking can no longer be rescheduled.",
+    "past-slot": "You cannot move a booking to a past slot.",
+    "slot-taken": "That time slot is already booked. Pick another slot.",
+    "invalid-time-range": "End time must be after the start time.",
+    "invalid-time": "Enter valid start and end times.",
+    "invalid-date": "Choose a valid date.",
+    "missing-fields": "Date and time are required.",
+    "student-id-exists": "That student ID is already registered.",
+  };
 
   const [
     tickets,
@@ -79,9 +114,19 @@ export default async function DashboardPage({
             Welcome, {user.name}
           </h1>
         </div>
-        <Button asChild>
-          <Link href="/maintenance/new">Create maintenance ticket</Link>
-        </Button>
+        <div className="flex flex-wrap gap-3">
+          <Button asChild variant="outline">
+            <Link href="/events">Browse events</Link>
+          </Button>
+          {user.role === "ADMINISTRATOR" ? (
+            <Button asChild variant="outline">
+              <Link href="/assets">Asset inventory</Link>
+            </Button>
+          ) : null}
+          <Button asChild>
+            <Link href="/maintenance/new">Create maintenance ticket</Link>
+          </Button>
+        </div>
       </div>
       <ActionToast
         specs={[
@@ -115,12 +160,57 @@ export default async function DashboardPage({
                 },
               ]
             : []),
+          ...(params.booking === "created"
+            ? [
+                {
+                  key: "booking",
+                  value: "created",
+                  message: "Booking request submitted for approval.",
+                  type: "success" as const,
+                },
+              ]
+            : []),
+          ...(params.booking === "cancelled"
+            ? [
+                {
+                  key: "booking",
+                  value: "cancelled",
+                  message: "Booking cancelled and slot released.",
+                  type: "success" as const,
+                },
+              ]
+            : []),
+          ...(params.booking === "rescheduled"
+            ? [
+                {
+                  key: "booking",
+                  value: "rescheduled",
+                  message: "Booking rescheduled and re-submitted for approval.",
+                  type: "success" as const,
+                },
+              ]
+            : []),
+          ...(params.error
+            ? [
+                {
+                  key: "error",
+                  value: params.error,
+                  message:
+                    bookingErrorMessages[params.error] ?? "Booking action failed.",
+                  type: "error" as const,
+                },
+              ]
+            : []),
         ]}
       />
 
       <Tabs className="mt-8 gap-8" defaultValue="overview">
         <TabsList className="w-full justify-start border-b p-0" variant="line">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="bookings">
+            My bookings
+            {bookings.length > 0 ? ` (${bookings.length})` : ""}
+          </TabsTrigger>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="notifications">
             Notifications
@@ -185,7 +275,12 @@ export default async function DashboardPage({
                     <article className="py-4">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
-                          <h3 className="font-semibold">{ticket.title}</h3>
+                          <Link
+                            href={`/maintenance/${ticket.id}`}
+                            className="font-semibold underline-offset-2 hover:underline"
+                          >
+                            {ticket.title}
+                          </Link>
                           <p className="mt-1 text-sm text-muted-foreground">
                             {ticket.location} · requested by {ticket.requester.name}
                           </p>
@@ -196,6 +291,111 @@ export default async function DashboardPage({
                     <Separator />
                   </div>
                 ))
+              )}
+            </div>
+          </section>
+        </TabsContent>
+
+        <TabsContent value="bookings">
+          <section>
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-heading text-2xl font-semibold uppercase tracking-wider">
+                  Facility bookings
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Your booking history and upcoming reservations.
+                </p>
+              </div>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/facilities">Book a facility</Link>
+              </Button>
+            </div>
+            <div>
+              {bookings.length === 0 ? (
+                <p className="text-muted-foreground">
+                  You have no bookings yet.{" "}
+                  <Link href="/facilities" className="underline">
+                    Browse facilities
+                  </Link>
+                  .
+                </p>
+              ) : (
+                bookings.map((booking) => {
+                  const dateString = booking.date.toISOString().slice(0, 10);
+                  const slotStart = new Date(`${dateString}T${booking.startTime}`);
+                  const canModify =
+                    (booking.status === "PENDING" || booking.status === "APPROVED") &&
+                    slotStart.getTime() >= now.getTime();
+
+                  return (
+                    <div key={booking.id}>
+                      <article className="py-4">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <h3 className="font-semibold">{booking.facility.name}</h3>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {dateString} · {booking.startTime}–{booking.endTime} ·{" "}
+                              {booking.attendeeCount} attendees
+                            </p>
+                            <p className="mt-1 text-sm text-foreground/80">
+                              {booking.purpose}
+                            </p>
+                            {booking.decisionComment ? (
+                              <p className="mt-1 text-sm text-muted-foreground">
+                                Admin note: {booking.decisionComment}
+                              </p>
+                            ) : null}
+                          </div>
+                          <StatusPill status={booking.status} />
+                        </div>
+                        {canModify ? (
+                          <div className="mt-4 grid gap-4 md:grid-cols-[auto_1fr]">
+                            <form action={cancelBookingAction}>
+                              <input name="bookingId" type="hidden" value={booking.id} />
+                              <SubmitButton loadingText="Cancelling..." variant="secondary">
+                                Cancel booking
+                              </SubmitButton>
+                            </form>
+                            <form
+                              action={rescheduleBookingAction}
+                              className="grid items-end gap-3 sm:grid-cols-[repeat(3,1fr)_auto]"
+                            >
+                              <input name="bookingId" type="hidden" value={booking.id} />
+                              <Field label="New date">
+                                <Input
+                                  name="date"
+                                  type="date"
+                                  min={todayString}
+                                  defaultValue={dateString}
+                                  required
+                                />
+                              </Field>
+                              <Field label="Start">
+                                <Input
+                                  name="startTime"
+                                  type="time"
+                                  defaultValue={booking.startTime}
+                                  required
+                                />
+                              </Field>
+                              <Field label="End">
+                                <Input
+                                  name="endTime"
+                                  type="time"
+                                  defaultValue={booking.endTime}
+                                  required
+                                />
+                              </Field>
+                              <SubmitButton loadingText="Saving...">Reschedule</SubmitButton>
+                            </form>
+                          </div>
+                        ) : null}
+                      </article>
+                      <Separator />
+                    </div>
+                  );
+                })
               )}
             </div>
           </section>
@@ -223,6 +423,16 @@ export default async function DashboardPage({
               </Field>
               <Field label="Phone">
                 <Input name="phone" defaultValue={user.phone ?? ""} />
+              </Field>
+              <Field label="Address">
+                <Input name="address" defaultValue={user.address ?? ""} />
+              </Field>
+              <Field label="Emergency contact">
+                <Input
+                  name="emergencyContact"
+                  defaultValue={user.emergencyContact ?? ""}
+                  placeholder="Name and phone number"
+                />
               </Field>
               <SubmitButton loadingText="Saving..." variant="secondary">
                 Update profile

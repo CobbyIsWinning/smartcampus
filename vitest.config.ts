@@ -9,5 +9,8 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // Ignore agent git worktrees nested under the repo so their duplicate
+    // test files are not discovered during normal runs.
+    exclude: ["**/node_modules/**", "**/.claude/**", "**/dist/**"],
   },
 });

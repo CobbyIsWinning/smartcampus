@@ -8,13 +8,18 @@ datasource db {
 
 enum Role {
   STUDENT
+  FACULTY
   ADMINISTRATOR
   MAINTENANCE_STAFF
+  MAINTENANCE_SUPERVISOR
+  EVENT_ORGANIZER
 }
 
 enum TicketStatus {
   OPEN
+  ASSIGNED
   IN_PROGRESS
+  WAITING
   RESOLVED
   CLOSED
 }
@@ -26,6 +31,85 @@ enum TicketPriority {
   URGENT
 }
 
+enum AssetStatus {
+  AVAILABLE
+  ASSIGNED
+  UNDER_MAINTENANCE
+  UNDER_REVIEW
+  LOST
+  RETIRED
+  DISPOSED
+}
+
+enum AssetChangeType {
+  CREATED
+  LOCATION_CHANGED
+  ALLOCATED
+  RETURNED
+  TRANSFER_REQUESTED
+  TRANSFER_APPROVED
+  TRANSFER_REJECTED
+  STATUS_CHANGED
+  SCANNED
+}
+
+enum FacilityCategory {
+  ROOM
+  LAB
+  HALL
+  SPORTS
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+}
+
+enum RegistrationStatus {
+  REGISTERED
+  WAITLISTED
+  CANCELLED
+}
+
+// Epic 6 (ANA-3): notification delivery channels and per-attempt status.
+enum DeliveryChannel {
+  IN_APP
+  EMAIL
+}
+
+enum DeliveryStatus {
+  SENT
+  FAILED
+  SKIPPED
+}
+
+// Epic 1 (Student Portal) — STU-5/6/7 enums
+enum EnrollmentStatus {
+  ENROLLED
+  DROPPED
+  COMPLETED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum AcademicStatus {
+  COMPLETED
+  PENDING
+}
+
 model User {
   id             String              @id @default(cuid())
   name           String
@@ -35,6 +119,9 @@ model User {
   studentId      String?
   department     String?
   phone          String?
+  // Epic 1 (Student Portal) — STU-4 profile fields
+  address          String?
+  emergencyContact String?
   sessionToken   String?             @unique
   sessionExpires DateTime?
   createdAt      DateTime            @default(now())
@@ -42,21 +129,55 @@ model User {
   tickets         MaintenanceTicket[] @relation("TicketRequester")
   assignedTickets MaintenanceTicket[] @relation("TicketAssignee")
   notifications   Notification[]
+  // Epic 2 (Facility Booking) back-reference
+  bookings        Booking[]
+  // Epic 3 (Asset Tracking) back-references — see asset.actions.ts.
+  allocatedAssets     Asset[]        @relation("AssetAssignee")
+  transferAssets      Asset[]        @relation("AssetTransferTarget")
+  assetHistoryEntries AssetHistory[] @relation("AssetHistoryActor")
+  // Epic 5 (Events) back-references
+  organizedEvents    Event[]             @relation("EventOrganizer")
+  eventRegistrations EventRegistration[] @relation("EventAttendee")
+  eventFeedback      EventFeedback[]     @relation("EventFeedbackAuthor")
+  // Epic 1 (Student Portal) — STU-3/5/6/7 back-references
+  passwordResets   PasswordReset[]
+  enrollments      Enrollment[]
+  attendance       Attendance[]
+  academicRecords  AcademicRecord[]
 }
 
 model MaintenanceTicket {
-  id           String         @id @default(cuid())
-  title        String
-  description  String
-  location     String
-  priority     TicketPriority @default(MEDIUM)
-  status       TicketStatus   @default(OPEN)
-  requesterId  String
-  assignedToId String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  requester    User           @relation("TicketRequester", fields: [requesterId], references: [id], onDelete: Cascade)
-  assignedTo   User?          @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  id              String          @id @default(cuid())
+  ticketNo        String          @unique
+  title           String
+  description     String
+  category        String?
+  location        String
+  building        String?
+  roomNumber      String?
+  imageUrls       String[]        @default([])
+  priority        TicketPriority  @default(MEDIUM)
+  status          TicketStatus    @default(OPEN)
+  slaDueAt        DateTime?
+  slaBreached     Boolean         @default(false)
+  reopenRequested Boolean         @default(false)
+  reopenReason    String?
+  requesterId     String
+  assignedToId    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  requester       User            @relation("TicketRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  assignedTo      User?           @relation("TicketAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  feedback        TicketFeedback?
+}
+
+model TicketFeedback {
+  id        String            @id @default(cuid())
+  ticketId  String            @unique
+  rating    Int
+  comment   String?
+  createdAt DateTime          @default(now())
+  ticket    MaintenanceTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }
 
 model Notification {
@@ -67,4 +188,237 @@ model Notification {
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Asset {
+  id                   String         @id @default(cuid())
+  assetId              String         @unique
+  qrToken              String         @unique
+  name                 String
+  category             String
+  serialNumber         String         @unique
+  purchaseDate         DateTime?
+  cost                 Float?
+  condition            String?
+  status               AssetStatus    @default(AVAILABLE)
+  owningDepartment     String?
+  building             String?
+  room                 String?
+  storage              String?
+  location             String?
+  assignedToId         String?
+  responsiblePerson    String?
+  assignedDate         DateTime?
+  transferToId         String?
+  transferToDepartment String?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  assignedTo           User?          @relation("AssetAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  transferTo           User?          @relation("AssetTransferTarget", fields: [transferToId], references: [id], onDelete: SetNull)
+  history              AssetHistory[]
+}
+
+model AssetHistory {
+  id            String          @id @default(cuid())
+  assetId       String
+  changeType    AssetChangeType
+  field         String?
+  previousValue String?
+  newValue      String?
+  note          String?
+  actedById     String?
+  createdAt     DateTime        @default(now())
+  asset         Asset           @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  actedBy       User?           @relation("AssetHistoryActor", fields: [actedById], references: [id], onDelete: SetNull)
+}
+
+model Facility {
+  id          String           @id @default(cuid())
+  name        String
+  category    FacilityCategory @default(ROOM)
+  capacity    Int              @default(0)
+  building    String
+  location    String
+  equipment   String?
+  description String?
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  bookings    Booking[]
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  facilityId      String
+  requesterId     String
+  date            DateTime
+  startTime       String
+  endTime         String
+  purpose         String
+  attendeeCount   Int           @default(1)
+  status          BookingStatus @default(PENDING)
+  decisionComment String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  facility        Facility      @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  requester       User          @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+
+  @@index([facilityId, date])
+  @@index([requesterId])
+}
+
+model Event {
+  id            String              @id @default(cuid())
+  title         String
+  description   String
+  category      String
+  startsAt      DateTime
+  endsAt        DateTime
+  venue         String
+  capacity      Int
+  eligibility   String?
+  status        EventStatus         @default(DRAFT)
+  checkInToken  String              @unique @default(cuid())
+  organizerId   String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  organizer     User                @relation("EventOrganizer", fields: [organizerId], references: [id], onDelete: Cascade)
+  registrations EventRegistration[]
+  feedback      EventFeedback[]
+}
+
+model EventRegistration {
+  id          String             @id @default(cuid())
+  eventId     String
+  studentId   String
+  status      RegistrationStatus @default(REGISTERED)
+  checkedInAt DateTime?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  event       Event              @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  student     User               @relation("EventAttendee", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, studentId])
+}
+
+model EventFeedback {
+  id        String   @id @default(cuid())
+  eventId   String
+  studentId String
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  student   User     @relation("EventFeedbackAuthor", fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, studentId])
+}
+
+// Epic 6 (ANA-3): configurable notification triggers. A row is the persisted
+// override for a trigger defined in the in-code catalog (app/lib/notifications.ts);
+// triggers without a row fall back to their catalog defaults.
+model NotificationRule {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  inApp       Boolean  @default(true)
+  email       Boolean  @default(false)
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Epic 6 (ANA-3): per-attempt delivery log stub. Records the channel used and
+// the resulting status for in-app vs email delivery of a triggered notification.
+model NotificationDelivery {
+  id        String         @id @default(cuid())
+  ruleKey   String
+  channel   DeliveryChannel
+  status    DeliveryStatus
+  recipient String
+  detail    String?
+  createdAt DateTime       @default(now())
+
+  @@index([ruleKey])
+  @@index([createdAt])
+}
+
+// --- Epic 1: Student Management Portal ---
+
+// STU-3 — single-use, time-limited password reset tokens
+model PasswordReset {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// STU-5 — course catalog
+model Course {
+  id          String           @id @default(cuid())
+  code        String           @unique
+  title       String
+  description String?
+  department  String?
+  credits     Int              @default(3)
+  capacity    Int              @default(30)
+  semester    String
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  enrollments Enrollment[]
+  attendance  Attendance[]
+  records     AcademicRecord[]
+}
+
+// STU-5 — student course enrollment
+model Enrollment {
+  id        String           @id @default(cuid())
+  courseId  String
+  studentId String
+  status    EnrollmentStatus @default(ENROLLED)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student   User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId])
+  @@index([studentId])
+}
+
+// STU-6 — per-session attendance marks
+model Attendance {
+  id        String           @id @default(cuid())
+  courseId  String
+  studentId String
+  date      DateTime
+  status    AttendanceStatus @default(PRESENT)
+  createdAt DateTime         @default(now())
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student   User             @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([courseId, studentId])
+  @@index([studentId])
+}
+
+// STU-7 — academic records / grades per course + semester
+model AcademicRecord {
+  id          String         @id @default(cuid())
+  courseId    String
+  studentId   String
+  semester    String
+  status      AcademicStatus @default(PENDING)
+  grade       String?
+  gradePoints Float?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  course      Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student     User           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, studentId, semester])
+  @@index([studentId])
 }

@@ -1,8 +1,16 @@
 import Link from "next/link";
 import {
+  BarChart3,
+  Bell,
+  BookOpen,
+  CalendarCog,
+  CalendarDays,
   ChevronDown,
+  ClipboardCheck,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
+  Package,
   Plus,
   Settings,
   Users,
@@ -67,7 +75,71 @@ export function AppShell({
                     New Ticket
                   </Link>
                 </Button>
-                {user.role !== "STUDENT" ? (
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/facilities">
+                    <CalendarDays />
+                    Facilities
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/events">
+                    <CalendarDays />
+                    Events
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/notifications">
+                    <Bell />
+                    Notifications
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/courses">
+                    <BookOpen />
+                    Courses
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/attendance">
+                    <ClipboardCheck />
+                    Attendance
+                  </Link>
+                </Button>
+                <Button asChild size="sm" variant="ghost">
+                  <Link href="/records">
+                    <GraduationCap />
+                    Records
+                  </Link>
+                </Button>
+                {user.role === "FACULTY" ||
+                user.role === "ADMINISTRATOR" ||
+                user.role === "EVENT_ORGANIZER" ? (
+                  <Button asChild size="sm" variant="ghost">
+                    <Link href="/events/manage">
+                      <CalendarCog />
+                      Manage Events
+                    </Link>
+                  </Button>
+                ) : null}
+                {user.role === "FACULTY" || user.role === "ADMINISTRATOR" ? (
+                  <Button asChild size="sm" variant="ghost">
+                    <Link href="/admin/courses">
+                      <BookOpen />
+                      Course Catalog
+                    </Link>
+                  </Button>
+                ) : null}
+                {user.role === "ADMINISTRATOR" ? (
+                  <Button asChild size="sm" variant="ghost">
+                    <Link href="/assets">
+                      <Package />
+                      Assets
+                    </Link>
+                  </Button>
+                ) : null}
+                {user.role === "ADMINISTRATOR" ||
+                user.role === "MAINTENANCE_STAFF" ||
+                user.role === "MAINTENANCE_SUPERVISOR" ? (
                   <>
                     <Button asChild size="sm" variant="ghost">
                       <Link href="/admin/maintenance">
@@ -75,15 +147,41 @@ export function AppShell({
                         Manage Tickets
                       </Link>
                     </Button>
-                    {user.role === "ADMINISTRATOR" ? (
+                    {user.role === "MAINTENANCE_STAFF" ||
+                    user.role === "MAINTENANCE_SUPERVISOR" ? (
                       <Button asChild size="sm" variant="ghost">
-                        <Link href="/admin/users">
-                          <Users />
-                          Users
+                        <Link href="/maintenance/tasks">
+                          <Settings />
+                          My Tasks
                         </Link>
                       </Button>
                     ) : null}
+                    {user.role === "ADMINISTRATOR" ? (
+                      <>
+                        <Button asChild size="sm" variant="ghost">
+                          <Link href="/admin/facilities">
+                            <CalendarDays />
+                            Facilities Admin
+                          </Link>
+                        </Button>
+                        <Button asChild size="sm" variant="ghost">
+                          <Link href="/admin/users">
+                            <Users />
+                            Users
+                          </Link>
+                        </Button>
+                      </>
+                    ) : null}
                   </>
+                ) : null}
+                {user.role === "ADMINISTRATOR" ||
+                user.role === "MAINTENANCE_SUPERVISOR" ? (
+                  <Button asChild size="sm" variant="ghost">
+                    <Link href="/admin/analytics">
+                      <BarChart3 />
+                      Analytics
+                    </Link>
+                  </Button>
                 ) : null}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -110,9 +208,14 @@ export function AppShell({
                       <Link href="/maintenance/new">New ticket</Link>
                     </DropdownMenuItem>
                     {user.role === "ADMINISTRATOR" ? (
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin/users">Users</Link>
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/assets">Assets</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin/users">Users</Link>
+                        </DropdownMenuItem>
+                      </>
                     ) : null}
                     <DropdownMenuSeparator />
                     <form action={logoutAction} className="px-1.5 py-1">

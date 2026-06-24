@@ -6,11 +6,42 @@ import { prisma } from "@/app/lib/prisma";
 
 const SESSION_COOKIE = "smartcampus_session";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
-type AppRole = "STUDENT" | "ADMINISTRATOR" | "MAINTENANCE_STAFF";
+
+export const APP_ROLES = [
+  "STUDENT",
+  "FACULTY",
+  "ADMINISTRATOR",
+  "MAINTENANCE_STAFF",
+  "MAINTENANCE_SUPERVISOR",
+  "EVENT_ORGANIZER",
+] as const;
+
+export type AppRole = (typeof APP_ROLES)[number];
+
+export const ROLE_LABELS: Record<AppRole, string> = {
+  STUDENT: "Student",
+  FACULTY: "Faculty",
+  ADMINISTRATOR: "Administrator",
+  MAINTENANCE_STAFF: "Maintenance staff",
+  MAINTENANCE_SUPERVISOR: "Maintenance supervisor",
+  EVENT_ORGANIZER: "Event organizer",
+};
+
+export function isAppRole(value: string): value is AppRole {
+  return (APP_ROLES as readonly string[]).includes(value);
+}
 
 export type CurrentUser = Pick<
   User,
-  "id" | "name" | "email" | "role" | "studentId" | "department" | "phone"
+  | "id"
+  | "name"
+  | "email"
+  | "role"
+  | "studentId"
+  | "department"
+  | "phone"
+  | "address"
+  | "emergencyContact"
 >;
 
 export async function createSession(userId: string) {
@@ -74,6 +105,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       studentId: true,
       department: true,
       phone: true,
+      address: true,
+      emergencyContact: true,
     },
   });
 
