@@ -10,6 +10,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   LogOut,
+  Menu,
   Package,
   Plus,
   Settings,
@@ -53,143 +54,141 @@ export function AppShell({
 }) {
   const currentYear = new Date().getFullYear();
 
+  const role = user?.role;
+  const navLinks = user
+    ? [
+        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, show: true },
+        { href: "/maintenance/new", label: "New Ticket", icon: Plus, show: true },
+        { href: "/facilities", label: "Facilities", icon: CalendarDays, show: true },
+        { href: "/events", label: "Events", icon: CalendarDays, show: true },
+        { href: "/notifications", label: "Notifications", icon: Bell, show: true },
+        { href: "/courses", label: "Courses", icon: BookOpen, show: true },
+        { href: "/attendance", label: "Attendance", icon: ClipboardCheck, show: true },
+        { href: "/records", label: "Records", icon: GraduationCap, show: true },
+        {
+          href: "/events/manage",
+          label: "Manage Events",
+          icon: CalendarCog,
+          show:
+            role === "FACULTY" ||
+            role === "ADMINISTRATOR" ||
+            role === "EVENT_ORGANIZER",
+        },
+        {
+          href: "/admin/courses",
+          label: "Course Catalog",
+          icon: BookOpen,
+          show: role === "FACULTY" || role === "ADMINISTRATOR",
+        },
+        {
+          href: "/assets",
+          label: "Assets",
+          icon: Package,
+          show: role === "ADMINISTRATOR",
+        },
+        {
+          href: "/admin/maintenance",
+          label: "Manage Tickets",
+          icon: Settings,
+          show:
+            role === "ADMINISTRATOR" ||
+            role === "MAINTENANCE_STAFF" ||
+            role === "MAINTENANCE_SUPERVISOR",
+        },
+        {
+          href: "/maintenance/tasks",
+          label: "My Tasks",
+          icon: Settings,
+          show:
+            role === "MAINTENANCE_STAFF" || role === "MAINTENANCE_SUPERVISOR",
+        },
+        {
+          href: "/admin/facilities",
+          label: "Facilities Admin",
+          icon: CalendarDays,
+          show: role === "ADMINISTRATOR",
+        },
+        {
+          href: "/admin/users",
+          label: "Users",
+          icon: Users,
+          show: role === "ADMINISTRATOR",
+        },
+        {
+          href: "/admin/analytics",
+          label: "Analytics",
+          icon: BarChart3,
+          show: role === "ADMINISTRATOR" || role === "MAINTENANCE_SUPERVISOR",
+        },
+      ].filter((link) => link.show)
+    : [];
+
+  const quickLinkHrefs = ["/dashboard", "/maintenance/new", "/notifications"];
+  const quickLinks = navLinks.filter((link) =>
+    quickLinkHrefs.includes(link.href),
+  );
+
   return (
     <div className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top_left,hsl(var(--muted))_0,transparent_36%),linear-gradient(to_bottom,hsl(var(--background)),hsl(var(--background)))] text-foreground">
       <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <Link href="/" className="font-heading text-lg font-semibold uppercase tracking-wider">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-5 py-4">
+          <Link
+            href="/"
+            className="font-heading text-base font-semibold uppercase tracking-wider sm:text-lg"
+          >
             Smart Campus
           </Link>
-          <nav className="flex items-center gap-3 text-sm">
+          <nav className="flex items-center gap-1.5 text-sm sm:gap-2">
             {user ? (
               <>
-                <Button asChild size="sm" variant="ghost">
-                  <Link href="/dashboard">
-                    <LayoutDashboard />
-                    Dashboard
-                  </Link>
-                </Button>
-                <Button asChild size="sm" variant="ghost">
-                  <Link href="/maintenance/new">
-                    <Plus />
-                    New Ticket
-                  </Link>
-                </Button>
-                <Button asChild size="sm" variant="ghost">
-                  <Link href="/facilities">
-                    <CalendarDays />
-                    Facilities
-                  </Link>
-                </Button>
-                <Button asChild size="sm" variant="ghost">
-                  <Link href="/events">
-                    <CalendarDays />
-                    Events
-                  </Link>
-                </Button>
-                <Button asChild size="sm" variant="ghost">
-                  <Link href="/notifications">
-                    <Bell />
-                    Notifications
-                  </Link>
-                </Button>
-                <Button asChild size="sm" variant="ghost">
-                  <Link href="/courses">
-                    <BookOpen />
-                    Courses
-                  </Link>
-                </Button>
-                <Button asChild size="sm" variant="ghost">
-                  <Link href="/attendance">
-                    <ClipboardCheck />
-                    Attendance
-                  </Link>
-                </Button>
-                <Button asChild size="sm" variant="ghost">
-                  <Link href="/records">
-                    <GraduationCap />
-                    Records
-                  </Link>
-                </Button>
-                {user.role === "FACULTY" ||
-                user.role === "ADMINISTRATOR" ||
-                user.role === "EVENT_ORGANIZER" ? (
-                  <Button asChild size="sm" variant="ghost">
-                    <Link href="/events/manage">
-                      <CalendarCog />
-                      Manage Events
-                    </Link>
-                  </Button>
-                ) : null}
-                {user.role === "FACULTY" || user.role === "ADMINISTRATOR" ? (
-                  <Button asChild size="sm" variant="ghost">
-                    <Link href="/admin/courses">
-                      <BookOpen />
-                      Course Catalog
-                    </Link>
-                  </Button>
-                ) : null}
-                {user.role === "ADMINISTRATOR" ? (
-                  <Button asChild size="sm" variant="ghost">
-                    <Link href="/assets">
-                      <Package />
-                      Assets
-                    </Link>
-                  </Button>
-                ) : null}
-                {user.role === "ADMINISTRATOR" ||
-                user.role === "MAINTENANCE_STAFF" ||
-                user.role === "MAINTENANCE_SUPERVISOR" ? (
-                  <>
-                    <Button asChild size="sm" variant="ghost">
-                      <Link href="/admin/maintenance">
-                        <Settings />
-                        Manage Tickets
-                      </Link>
-                    </Button>
-                    {user.role === "MAINTENANCE_STAFF" ||
-                    user.role === "MAINTENANCE_SUPERVISOR" ? (
-                      <Button asChild size="sm" variant="ghost">
-                        <Link href="/maintenance/tasks">
-                          <Settings />
-                          My Tasks
+                <div className="hidden items-center gap-1 lg:flex">
+                  {quickLinks.map((link) => {
+                    const Icon = link.icon;
+                    return (
+                      <Button asChild key={link.href} size="sm" variant="ghost">
+                        <Link href={link.href}>
+                          <Icon />
+                          {link.label}
                         </Link>
                       </Button>
-                    ) : null}
-                    {user.role === "ADMINISTRATOR" ? (
-                      <>
-                        <Button asChild size="sm" variant="ghost">
-                          <Link href="/admin/facilities">
-                            <CalendarDays />
-                            Facilities Admin
+                    );
+                  })}
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="ghost">
+                      <Menu />
+                      <span className="hidden sm:inline">Menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="max-h-[70vh] w-56 overflow-y-auto"
+                  >
+                    <DropdownMenuLabel>Navigate</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {navLinks.map((link) => {
+                      const Icon = link.icon;
+                      return (
+                        <DropdownMenuItem asChild key={link.href}>
+                          <Link href={link.href}>
+                            <Icon />
+                            {link.label}
                           </Link>
-                        </Button>
-                        <Button asChild size="sm" variant="ghost">
-                          <Link href="/admin/users">
-                            <Users />
-                            Users
-                          </Link>
-                        </Button>
-                      </>
-                    ) : null}
-                  </>
-                ) : null}
-                {user.role === "ADMINISTRATOR" ||
-                user.role === "MAINTENANCE_SUPERVISOR" ? (
-                  <Button asChild size="sm" variant="ghost">
-                    <Link href="/admin/analytics">
-                      <BarChart3 />
-                      Analytics
-                    </Link>
-                  </Button>
-                ) : null}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button size="sm" variant="outline">
                       <Avatar size="sm">
                         <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                       </Avatar>
-                      <span className="max-w-32 truncate">{user.name}</span>
+                      <span className="hidden max-w-32 truncate sm:inline">
+                        {user.name}
+                      </span>
                       <ChevronDown />
                     </Button>
                   </DropdownMenuTrigger>
@@ -200,23 +199,6 @@ export function AppShell({
                         {user.role.replaceAll("_", " ")}
                       </span>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard">Dashboard</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/maintenance/new">New ticket</Link>
-                    </DropdownMenuItem>
-                    {user.role === "ADMINISTRATOR" ? (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link href="/assets">Assets</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/admin/users">Users</Link>
-                        </DropdownMenuItem>
-                      </>
-                    ) : null}
                     <DropdownMenuSeparator />
                     <form action={logoutAction} className="px-1.5 py-1">
                       <SubmitButton
