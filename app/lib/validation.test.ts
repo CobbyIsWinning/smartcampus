@@ -3,10 +3,13 @@ import {
   attendancePercentage,
   bookingSlotsOverlap,
   computeGpa,
+  computeSlaDueAt,
   isAllowedEmailDomain,
   isBookingSlotInPast,
   isEligible,
   isLowAttendance,
+  isSlaBreached,
+  slaHoursFor,
   validateAllocationInput,
   validateAssetInput,
   validateBookingInput,
@@ -17,6 +20,8 @@ import {
   validatePasswordResetRequestInput,
   validateRegisterInput,
   validateResetPasswordInput,
+  validateTicketFeedbackInput,
+  validateTicketInput,
   validateTransferInput,
 } from "@/app/lib/validation";
 
@@ -481,5 +486,111 @@ describe("computeGpa", () => {
         { gradePoints: 3, credits: 1 },
       ]),
     ).toBe(3.75);
+  });
+});
+
+describe("validateTicketInput", () => {
+  const base = {
+    title: "Broken AC unit",
+    description: "The air conditioning stopped working overnight.",
+    location: "Block A",
+  };
+
+  it("accepts valid input with optional fields", () => {
+    expect(
+      validateTicketInput({
+        ...base,
+        category: "HVAC",
+        building: "Block A",
+        roomNumber: "204",
+      }),
+    ).toEqual({ ok: true });
+  });
+
+  it("rejects missing required fields", () => {
+    expect(validateTicketInput({ ...base, title: "" }).ok).toBe(false);
+  });
+
+  it("rejects an over-short category", () => {
+    expect(validateTicketInput({ ...base, category: "x" })).toEqual({
+      ok: false,
+      error: "invalid-category",
+    });
+  });
+
+  it("rejects an over-long room number", () => {
+    expect(validateTicketInput({ ...base, roomNumber: "x".repeat(61) })).toEqual({
+      ok: false,
+      error: "invalid-room",
+    });
+  });
+});
+
+describe("slaHoursFor", () => {
+  it("uses the priority budget by default", () => {
+    expect(slaHoursFor("URGENT")).toBe(4);
+    expect(slaHoursFor("HIGH")).toBe(24);
+    expect(slaHoursFor("MEDIUM")).toBe(72);
+    expect(slaHoursFor("LOW")).toBe(168);
+  });
+
+  it("tightens the window for safety-critical categories", () => {
+    expect(slaHoursFor("HIGH", "Electrical")).toBe(12);
+    expect(slaHoursFor("HIGH", "Safety")).toBe(6);
+    expect(slaHoursFor("URGENT", "Safety")).toBe(1);
+  });
+
+  it("ignores unknown categories", () => {
+    expect(slaHoursFor("MEDIUM", "Furniture")).toBe(72);
+  });
+});
+
+describe("computeSlaDueAt", () => {
+  it("adds the SLA budget to the creation time", () => {
+    const from = new Date("2026-06-24T00:00:00.000Z");
+    const due = computeSlaDueAt("HIGH", null, from);
+    expect(due.toISOString()).toBe("2026-06-25T00:00:00.000Z");
+  });
+});
+
+describe("isSlaBreached", () => {
+  const due = new Date("2026-06-24T00:00:00.000Z");
+
+  it("is true when overdue and still active", () => {
+    expect(isSlaBreached(due, "IN_PROGRESS", new Date("2026-06-24T01:00:00.000Z"))).toBe(
+      true,
+    );
+  });
+
+  it("is false before the due time", () => {
+    expect(isSlaBreached(due, "OPEN", new Date("2026-06-23T23:00:00.000Z"))).toBe(false);
+  });
+
+  it("is false for resolved/closed tickets", () => {
+    expect(isSlaBreached(due, "RESOLVED", new Date("2026-06-25T00:00:00.000Z"))).toBe(
+      false,
+    );
+    expect(isSlaBreached(null, "OPEN")).toBe(false);
+  });
+});
+
+describe("validateTicketFeedbackInput", () => {
+  it("accepts a valid rating", () => {
+    expect(validateTicketFeedbackInput({ rating: 4, comment: "Great" })).toEqual({
+      ok: true,
+    });
+  });
+
+  it("rejects an out-of-range rating", () => {
+    expect(validateTicketFeedbackInput({ rating: 6, comment: "" })).toEqual({
+      ok: false,
+      error: "invalid-rating",
+    });
+  });
+
+  it("rejects an over-long comment", () => {
+    expect(
+      validateTicketFeedbackInput({ rating: 3, comment: "x".repeat(2001) }),
+    ).toEqual({ ok: false, error: "invalid-comment" });
   });
 });

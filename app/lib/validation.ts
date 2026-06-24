@@ -100,6 +100,9 @@ export function validateTicketInput(input: {
   title: string;
   description: string;
   location: string;
+  category?: string;
+  building?: string;
+  roomNumber?: string;
 }): ValidationResult {
   if (!input.title || !input.description || !input.location) {
     return { ok: false, error: "missing-fields" };
@@ -115,6 +118,18 @@ export function validateTicketInput(input: {
 
   if (input.description.length < 10 || input.description.length > 2000) {
     return { ok: false, error: "invalid-description" };
+  }
+
+  if (input.category && (input.category.length < 2 || input.category.length > 60)) {
+    return { ok: false, error: "invalid-category" };
+  }
+
+  if (input.building && input.building.length > 120) {
+    return { ok: false, error: "invalid-building" };
+  }
+
+  if (input.roomNumber && input.roomNumber.length > 60) {
+    return { ok: false, error: "invalid-room" };
   }
 
   return { ok: true };
@@ -500,4 +515,85 @@ export function computeGpa(
   }
 
   return Math.round((totalPoints / totalCredits) * 100) / 100;
+}
+
+// --- Epic 4: Maintenance priority, SLA & feedback ---
+
+export type TicketPriorityValue = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+
+// Resolution targets in hours per priority. URGENT is surfaced in the UI as
+// "Critical" but the enum value is kept as URGENT to avoid a destructive
+// migration (MNT-5).
+export const SLA_HOURS_BY_PRIORITY: Record<TicketPriorityValue, number> = {
+  URGENT: 4,
+  HIGH: 24,
+  MEDIUM: 72,
+  LOW: 168,
+};
+
+// Safety-critical categories tighten the resolution window via a multiplier
+// applied to the priority budget (e.g. an electrical hazard is resolved faster
+// than a generic HIGH ticket).
+const CATEGORY_SLA_FACTOR: Record<string, number> = {
+  electrical: 0.5,
+  plumbing: 0.75,
+  safety: 0.25,
+  security: 0.25,
+  hvac: 0.75,
+};
+
+/**
+ * Compute the SLA hour budget for a ticket from its priority and (optionally)
+ * its category. Pure and deterministic so it can be unit tested.
+ */
+export function slaHoursFor(
+  priority: TicketPriorityValue,
+  category?: string | null,
+): number {
+  const base = SLA_HOURS_BY_PRIORITY[priority] ?? SLA_HOURS_BY_PRIORITY.MEDIUM;
+  const factor = category
+    ? (CATEGORY_SLA_FACTOR[category.trim().toLowerCase()] ?? 1)
+    : 1;
+  return Math.max(1, Math.round(base * factor));
+}
+
+/** Due instant for a ticket, computed from creation time + the SLA budget. */
+export function computeSlaDueAt(
+  priority: TicketPriorityValue,
+  category: string | null | undefined,
+  from: Date = new Date(),
+): Date {
+  return new Date(from.getTime() + slaHoursFor(priority, category) * 60 * 60 * 1000);
+}
+
+const SLA_CLOSED_STATUSES = new Set(["RESOLVED", "CLOSED"]);
+
+/**
+ * A ticket has breached its SLA when it is still open work (not resolved/closed)
+ * and the due instant has passed.
+ */
+export function isSlaBreached(
+  slaDueAt: Date | null | undefined,
+  status: string,
+  now: Date = new Date(),
+): boolean {
+  if (!slaDueAt || SLA_CLOSED_STATUSES.has(status)) {
+    return false;
+  }
+  return slaDueAt.getTime() < now.getTime();
+}
+
+export function validateTicketFeedbackInput(input: {
+  rating: number;
+  comment: string;
+}): ValidationResult {
+  if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 5) {
+    return { ok: false, error: "invalid-rating" };
+  }
+
+  if (input.comment.length > 2000) {
+    return { ok: false, error: "invalid-comment" };
+  }
+
+  return { ok: true };
 }
