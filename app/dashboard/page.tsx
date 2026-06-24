@@ -114,6 +114,9 @@ export default async function DashboardPage({
           </h1>
         </div>
         <div className="flex flex-wrap gap-3">
+          <Button asChild variant="outline">
+            <Link href="/events">Browse events</Link>
+          </Button>
           {user.role === "ADMINISTRATOR" ? (
             <Button asChild variant="outline">
               <Link href="/assets">Asset inventory</Link>
